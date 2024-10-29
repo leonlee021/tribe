@@ -3,9 +3,10 @@
     "name": "mutually",
     "slug": "mutually",
     "version": "1.0.0",
+    "sdkVersion": "51.0.28",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "myapp",
+    "scheme": "mutually",
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/images/splash.png",
