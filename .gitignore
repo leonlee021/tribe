@@ -90,6 +90,7 @@ jspm_packages/
 # -----------------------------------
 
 # Xcode
+ios
 ios/Pods/
 ios/build/
 ios/DerivedData/
@@ -120,6 +121,7 @@ ios/fastlane/test_output
 # -----------------------------------
 
 # Gradle
+android
 android/.gradle/
 android/build/
 android/app/build/
