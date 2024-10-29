@@ -3,7 +3,6 @@
     "name": "mutually",
     "slug": "mutually",
     "version": "1.0.0",
-    "sdkVersion": "51.0.28",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "mutually",
@@ -16,8 +15,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.leonlee021.mutually",
-      "googleServicesFile": "./GoogleService-Info.plist",
-      "package": "com.leonlee021.mutually"
+      "googleServicesFile": "./GoogleService-Info.plist"
     },
     "android": {
       "adaptiveIcon": {
@@ -36,7 +34,6 @@
       "@react-native-firebase/app",
       "@react-native-firebase/auth",
       "@react-native-firebase/messaging",
-      "expo-router",
       [
         "expo-build-properties",
         {
@@ -46,9 +43,6 @@
         }
       ]
     ],
-    "experiments": {
-      "typedRoutes": true
-    },
     "extra": {
       "eas": {
         "projectId": "7604e256-14e7-4b7e-980c-3cc76ddb2335"
