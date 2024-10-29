@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "619460684766",
+    "project_id": "mutually-39428",
+    "storage_bucket": "mutually-39428.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:619460684766:android:1e962a2f872c31f99b0b4f",
+        "android_client_info": {
+          "package_name": "com.leonlee021.mutually"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "619460684766-bflu4ouo97ej08dnbe47ihid8jp3r4ro.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAafoUbv9y6gbSPICyGFOSZtpKXFXq1240"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "619460684766-bflu4ouo97ej08dnbe47ihid8jp3r4ro.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "619460684766-3k4mvkfci496vhc8d7l18l5qq3nq074p.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.leonlee021.mutually"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
