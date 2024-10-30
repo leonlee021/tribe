@@ -5,7 +5,7 @@ import { StripeProvider, useStripe, CardField } from '@stripe/stripe-react-nativ
 import api from '../services/api';
 import Icon from 'react-native-vector-icons/Ionicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getAuth, signOut } from 'firebase/auth'; 
+import auth from '@react-native-firebase/auth';
 import { UserContext } from '../contexts/UserContext';
 
 const SettingsScreen = () => {
@@ -102,8 +102,7 @@ const SettingsScreen = () => {
                     text: 'Log Out',
                     onPress: async () => {
                         try {
-                            const auth = getAuth(); // Initialize Firebase Auth
-                            await signOut(auth); // Sign out from Firebase
+                            await auth().signOut(); // Sign out using React Native Firebase Auth
     
                             // Remove tokens or any user-specific data from AsyncStorage
                             await AsyncStorage.removeItem('userToken');
@@ -124,6 +123,7 @@ const SettingsScreen = () => {
             ]
         );
     };
+    
     
     return (
         <SafeAreaView style={styles.container}>

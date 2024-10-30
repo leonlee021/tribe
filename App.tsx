@@ -23,6 +23,28 @@ import SettingsScreen from './src/screens/SettingsScreen';
 import AddCardScreen from './src/screens/AddCardScreen';
 import HiddenTasksScreen from './src/screens/HiddenTasksScreen';
 
+const firebaseConfig = {
+  apiKey: "AIzaSyA3p9i_O2419jzmMwEs2HhuEygoYcF0u4g",
+  authDomain: "mutually-39428.firebaseapp.com",
+  projectId: "mutually-39428",
+  storageBucket: "mutually-39428.appspot.com",
+  messagingSenderId: "619460684766",
+  appId: "1:619460684766:web:86ec0205fad1bec49b0b4f",
+  measurementId: "G-M46K95WYMK"
+};
+
+const initializeFirebase = () => {
+  if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+    console.log('Firebase initialized');
+  } else {
+    console.log('Firebase already initialized');
+  }
+};
+
+initializeFirebase();
+  
+
 const config = {
     animation: 'timing' as const, // Ensures 'timing' is a literal type
     config: {
@@ -38,21 +60,6 @@ const options = {
   cardStyleInterpolator: CardStyleInterpolators.forNoAnimation,
   cardStyle: { opacity: 1 },
 };
-
-const firebaseConfig = {
-  apiKey: "AIzaSyA3p9i_O2419jzmMwEs2HhuEygoYcF0u4g",
-  authDomain: "mutually-39428.firebaseapp.com",
-  projectId: "mutually-39428",
-  storageBucket: "mutually-39428.appspot.com",
-  messagingSenderId: "619460684766",
-  appId: "1:619460684766:web:86ec0205fad1bec49b0b4f",
-  measurementId: "G-M46K95WYMK"
-};
-
-if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-  }
-  
 
 // Register for notifications and handle permissions
 async function registerForPushNotificationsAsync() {
