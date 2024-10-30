@@ -68,7 +68,7 @@ const ActivityScreen = () => {
         const requesterTasks = tasks.filter(task => task.userId === user?.id);
         const taskerTasks = tasks.filter(task => 
             task.taskerAcceptedId === user?.id ||
-            (task.offers && task.offers.some(offer => offer.taskerId === user.id && offer.status === 'cancelled'))
+            (task.offers && task.offers.some(offer => offer.taskerId === user?.id && offer.status === 'cancelled'))
         );
     
         const requesterNotificationCount = requesterTasks.reduce((total, task) => {
