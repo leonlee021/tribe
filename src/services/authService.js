@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { auth0Config } from '../../auth0Config.js';
 
 const redirectUri = AuthSession.makeRedirectUri({ 
-    scheme: 'tribe',
+    scheme: 'mutually',
     useProxy: true 
 });
 const auth0Domain = auth0Config.domain;

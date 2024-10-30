@@ -44,7 +44,7 @@ const LoginModal = ({ visible, onClose, onLoginSuccess }) => {
         scopes: ['openid', 'profile', 'email'],
         responseType: 'id_token', // Request both access token and ID token
         redirectUri: makeRedirectUri({
-            scheme: 'tribe', // Replace with your app's scheme
+            scheme: 'mutually', // Replace with your app's scheme
             useProxy: true,
         }),
     });
