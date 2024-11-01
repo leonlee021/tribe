@@ -1,10 +1,9 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-const apiUrl = 'http://192.168.0.108:4000';
+import { API_BASE_URL } from '@env';
 
 const api = axios.create({
-    baseURL: apiUrl,
+    baseURL: API_BASE_URL,
     timeout: 30000,
 });
 

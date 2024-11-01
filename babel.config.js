@@ -12,7 +12,17 @@ module.exports = function(api) {
           },
         },
       ],
-      // Add other plugins if necessary
+      [
+        'module:react-native-dotenv',
+        {
+          moduleName: '@env',
+          path: '.env',
+          blacklist: null,
+          whitelist: null,
+          safe: false,
+          allowUndefined: true,
+        },
+      ],
     ],
   };
 };

@@ -51,6 +51,7 @@
     "react-native": "0.74.5",
     "react-native-auth0": "^3.2.1",
     "react-native-base64": "^0.2.1",
+    "react-native-dotenv": "^3.4.11",
     "react-native-elements": "^3.4.3",
     "react-native-gesture-handler": "~2.16.1",
     "react-native-jwt-decode": "^1.0.3",
@@ -63,7 +64,8 @@
     "react-native-tab-view": "^3.5.2",
     "react-native-vector-icons": "^10.2.0",
     "react-native-web": "~0.19.10",
-    "yup": "^1.4.0"
+    "yup": "^1.4.0",
+    "expo-image-manipulator": "~12.0.5"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

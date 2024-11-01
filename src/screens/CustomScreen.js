@@ -19,6 +19,7 @@ import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import LoginPromptModal from '../components/LoginModal';
 import api from '../services/api'; // API import for task posting
+import * as ImageManipulator from 'expo-image-manipulator';
 
 const CustomScreen = () => {
     const [taskName, setTaskName] = useState('');
@@ -81,11 +82,16 @@ const CustomScreen = () => {
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
             allowsMultipleSelection: false, // Change to 'false' if multiple selection isn't supported
             aspect: [4, 3],
-            quality: 1,
+            quality: 0.7,
         });
     
         if (!result.canceled) {
-            setImages([...images, result.assets[0].uri]);
+            const compressedImage = await ImageManipulator.manipulateAsync(
+                result.assets[0].uri,
+                [{ resize: { width: 800 } }], // Resize to width 800px (maintains aspect ratio)
+                { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
+            );
+            setImages([...images, compressedImage.uri]);
         }
     };
     
@@ -118,7 +124,7 @@ const CustomScreen = () => {
                 const match = /\.(\w+)$/.exec(filename);
                 const type = match ? `image/${match[1]}` : `image`;
     
-                formData.append('photos', {
+                formData.append('taskPhotos', {
                     uri: imageUri,
                     name: filename,
                     type,
