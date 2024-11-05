@@ -29,7 +29,9 @@ const TaskPost = ({
 
   const renderTaskPhotos = () => {
     const photos = task.photos || [];
+    console.log('Cover photo URL:', photos[0]);
     if (photos.length > 0) {
+      console.log('Cover photo URL:', photos[0]);
       return (
         <TouchableOpacity onPress={() => setIsPhotoModalVisible(true)} style={styles.photoContainer}>
           <Image source={{ uri: photos[0] }} style={styles.coverPhoto} />
@@ -139,7 +141,7 @@ const TaskPost = ({
           style={styles.acceptButton} 
           onPress={() => setIsOfferModalVisible(true)}
         >
-          <Text style={styles.acceptButtonText}>Apply</Text>
+          <Text style={styles.acceptButtonText}>Apply!!</Text>
         </TouchableOpacity>
       )}
       {task.status !== 'active' && userHasApplied && (
@@ -343,5 +345,30 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     resizeMode: 'contain',
+  },
+  photoContainer: {
+    position: 'relative',
+    width: '100%',
+    height: 200,
+    marginTop: 10,
+  },
+  coverPhoto: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 12,
+  },
+  morePhotosOverlay: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  morePhotosText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });

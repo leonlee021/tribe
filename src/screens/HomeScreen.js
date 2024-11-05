@@ -21,7 +21,10 @@ const HomeScreen = () => {
     const { user, fetchUserProfile } = useContext(UserContext);
 
     useEffect(() => {
+        console.log('HomeScreen: useEffect called');
         const initialize = async () => {
+            const token = await AsyncStorage.getItem('userToken');
+            console.log('Token in HomeScreen:', token);
             await fetchTasks();
             setIsLoading(false);
         };
@@ -33,6 +36,7 @@ const HomeScreen = () => {
             const token = await AsyncStorage.getItem('userToken');
             const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
             const response = await api.get('/tasks', { headers });
+            console.log('Tasks fetched in HomeScreen:', response.data); 
             setTasks(response.data);
         } catch (error) {
             console.error('Error fetching tasks:', JSON.stringify(error, null, 2));

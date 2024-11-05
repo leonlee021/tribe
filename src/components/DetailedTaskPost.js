@@ -21,6 +21,7 @@ const DetailedTaskPost = ({
   onViewProfile,
   onAcceptOffer,
   onDeleteTask, 
+  onImageError, 
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [review, setReview] = useState('');  // For the review text input
@@ -47,10 +48,19 @@ const DetailedTaskPost = ({
 
   const renderTaskPhotos = () => {
     const photos = task.photos || [];
+    console.log('Task photos in TaskPost:', photos);
     if (photos.length > 0) {
+      console.log('Cover photo URL:', photos[0]);
       return (
         <TouchableOpacity onPress={() => setIsPhotoModalVisible(true)} style={styles.photoContainer}>
-          <Image source={{ uri: photos[0] }} style={styles.coverPhoto} />
+          <Image 
+            source={{ uri: photos[0] }} 
+            style={styles.coverPhoto} 
+            onError={() => {
+              Alert.alert('Image Load Error', 'Failed to load image. Refreshing...');
+              onImageError(); // Trigger task refresh
+            }}
+          />
           {photos.length > 1 && (
             <View style={styles.morePhotosOverlay}>
               <Text style={styles.morePhotosText}>+{photos.length - 1}</Text>
@@ -424,6 +434,7 @@ const renderTaskActions = () => {
         <Modal
           visible={isPhotoModalVisible}
           transparent={true}
+          animationType="slide"
           onRequestClose={() => setIsPhotoModalVisible(false)}
         >
           <View style={styles.modalContainer}>
@@ -443,6 +454,10 @@ const renderTaskActions = () => {
                   <Image
                     source={{ uri: photo }}
                     style={styles.fullScreenPhoto}
+                    onError={() => {
+                      Alert.alert('Image Load Error', 'Failed to load image. Refreshing...');
+                      onImageError(); // Trigger task refresh
+                    }}
                   />
                 </View>
               ))}

@@ -1,21 +1,33 @@
 {
-    "cli": {
-      "version": ">= 12.6.1",
-      "appVersionSource": "remote"
-    },
-    "build": {
-      "development": {
-        "developmentClient": true,
-        "distribution": "internal"
+  "cli": {
+    "version": ">= 12.6.1",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "env": {
+        "ENVIRONMENT": "development"
       },
-      "preview": {
-        "distribution": "internal"
+      "cache": {
+        "key": "development-{{timestamp}}",
+        "paths": [
+          "node_modules/**/*"
+        ]
       },
-      "production": {
-        "autoIncrement": true
+      "ios": {
+        "resourceClass": "m1-medium"
       }
     },
-    "submit": {
-      "production": {}
+    "preview": {
+      "distribution": "internal"
+    },
+    "production": {
+      "autoIncrement": true
     }
+  },
+  "submit": {
+    "production": {}
   }
+}

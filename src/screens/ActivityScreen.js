@@ -27,6 +27,7 @@ const ActivityScreen = () => {
 
     // Fetch user notifications when the screen loads
     useEffect(() => {
+        console.log('ActivityScreen: useEffect called'); 
         const fetchData = async () => {
             try {
                 // Fetch notifications
@@ -109,6 +110,7 @@ const ActivityScreen = () => {
             const token = await AsyncStorage.getItem('userToken');
             const headers = token ? { Authorization: `Bearer ${token}` } : {};
             const response = await api.get('/tasks', { headers });
+            console.log('Tasks fetched in ActivityScreen:', response.data);
             
             // Sort tasks so those with notifications appear at the top
             const tasksWithNotifications = response.data.map(task => {
@@ -325,7 +327,17 @@ const ActivityScreen = () => {
         );
     };
 
-
+    const refreshTasks = async () => {
+        setIsLoading(true);
+        try {
+          await fetchNotifications();
+          await fetchTasks();
+        } catch (error) {
+          console.error('Error refreshing tasks:', error);
+        } finally {
+          setIsLoading(false);
+        }
+      };    
 
     // Render Tasker Tab
     const renderTaskerTab = () => {
@@ -356,6 +368,7 @@ const ActivityScreen = () => {
                             onViewProfile={(userId) => handleViewProfile(userId)}
                             onAcceptOffer={handleAcceptOffer}
                             onDeleteTask={() => handleDeleteTask(item.id)}
+                            onImageError={refreshTasks} 
                         />
                     );
                 }}
@@ -389,6 +402,7 @@ const ActivityScreen = () => {
                             onViewProfile={(userId) => handleViewProfile(userId)}
                             onAcceptOffer={handleAcceptOffer}
                             onDeleteTask={() => handleDeleteTask(item.id)}
+                            onImageError={refreshTasks}
                         />
                     );
                 }}
