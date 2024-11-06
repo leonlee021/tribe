@@ -21,7 +21,6 @@ const HomeScreen = () => {
     const { user, fetchUserProfile } = useContext(UserContext);
 
     useEffect(() => {
-        console.log('HomeScreen: useEffect called');
         const initialize = async () => {
             const token = await AsyncStorage.getItem('userToken');
             console.log('Token in HomeScreen:', token);

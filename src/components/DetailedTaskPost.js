@@ -50,7 +50,6 @@ const DetailedTaskPost = ({
     const photos = task.photos || [];
     console.log('Task photos in TaskPost:', photos);
     if (photos.length > 0) {
-      console.log('Cover photo URL:', photos[0]);
       return (
         <TouchableOpacity onPress={() => setIsPhotoModalVisible(true)} style={styles.photoContainer}>
           <Image 

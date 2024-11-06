@@ -29,9 +29,7 @@ const TaskPost = ({
 
   const renderTaskPhotos = () => {
     const photos = task.photos || [];
-    console.log('Cover photo URL:', photos[0]);
     if (photos.length > 0) {
-      console.log('Cover photo URL:', photos[0]);
       return (
         <TouchableOpacity onPress={() => setIsPhotoModalVisible(true)} style={styles.photoContainer}>
           <Image source={{ uri: photos[0] }} style={styles.coverPhoto} />
@@ -141,7 +139,7 @@ const TaskPost = ({
           style={styles.acceptButton} 
           onPress={() => setIsOfferModalVisible(true)}
         >
-          <Text style={styles.acceptButtonText}>Apply!!</Text>
+          <Text style={styles.acceptButtonText}>Apply</Text>
         </TouchableOpacity>
       )}
       {task.status !== 'active' && userHasApplied && (

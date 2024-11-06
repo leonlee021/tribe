@@ -83,7 +83,6 @@ async function registerForPushNotificationsAsync() {
 
 
 export default function App() {
-  console.log('App.tsx reloaded');
   const Stack = createStackNavigator();
 
   useEffect(() => {

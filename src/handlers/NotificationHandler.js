@@ -1,35 +1,63 @@
-// NotificationHandler.js
-
+// src/handlers/NotificationHandler.js
 import React, { useEffect, useContext } from 'react';
-import * as Notifications from 'expo-notifications';
+import messaging from '@react-native-firebase/messaging';
+import { Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NotificationContext } from '../contexts/NotificationContext';
+import { registerDeviceForNotifications } from '../services/notificationService';
 
 const NotificationHandler = () => {
   const navigation = useNavigation();
   const { resetBadgeCounts, fetchNotifications } = useContext(NotificationContext);
 
   useEffect(() => {
-    // Handle background notification tap
-    const subscription = Notifications.addNotificationResponseReceivedListener(async response => {
-      const notificationData = response.notification.request.content.data;
-      console.log('Notification Response Data:', notificationData); // Debug log
+    const setupNotifications = async () => {
+      // Register device for notifications
+      await registerDeviceForNotifications();
 
-      // Navigate based on the notification type
-      if (notificationData.type === 'activity') {
-        navigation.navigate('ActivityScreen');
-      } else if (notificationData.type === 'chat') {
-        navigation.navigate('ChatScreen');
-      }
+      // Handle notifications when app is in background
+      messaging().setBackgroundMessageHandler(async remoteMessage => {
+        console.log('Message handled in the background:', remoteMessage);
+      });
 
-      // Fetch and update notifications after navigation
-      await fetchNotifications();
+      // Handle notifications when app is in foreground
+      const unsubscribe = messaging().onMessage(async remoteMessage => {
+        console.log('Received foreground message:', remoteMessage);
+        fetchNotifications();
+      });
 
-      // Reset badge counts after navigating
-      resetBadgeCounts(notificationData.type);
-    });
+      // Handle notification open
+      messaging().onNotificationOpenedApp(remoteMessage => {
+        console.log('Notification opened app:', remoteMessage);
+        if (remoteMessage.data?.type === 'activity') {
+          navigation.navigate('ActivityScreen');
+          resetBadgeCounts('activity');
+        } else if (remoteMessage.data?.type === 'chat') {
+          navigation.navigate('ChatScreen');
+          resetBadgeCounts('chat');
+        }
+      });
 
-    return () => subscription.remove();
+      // Check if app was opened from a notification
+      messaging()
+        .getInitialNotification()
+        .then(remoteMessage => {
+          if (remoteMessage) {
+            console.log('App opened from quit state:', remoteMessage);
+            if (remoteMessage.data?.type === 'activity') {
+              navigation.navigate('ActivityScreen');
+              resetBadgeCounts('activity');
+            } else if (remoteMessage.data?.type === 'chat') {
+              navigation.navigate('ChatScreen');
+              resetBadgeCounts('chat');
+            }
+          }
+        });
+
+      return unsubscribe;
+    };
+
+    setupNotifications();
   }, [navigation, resetBadgeCounts, fetchNotifications]);
 
   return null;

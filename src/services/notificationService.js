@@ -1,35 +1,56 @@
-// src/services/notificationService.js
+import messaging from '@react-native-firebase/messaging';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import api from '../services/api';
+import api from './api';
 
-export const fetchNotifications = async () => {
+export const requestUserPermission = async () => {
   try {
-    const token = await AsyncStorage.getItem('userToken');
-    if (!token) return []; // Return an empty array if no token
+    const authStatus = await messaging().requestPermission();
+    const enabled =
+      authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+      authStatus === messaging.AuthorizationStatus.PROVISIONAL;
 
-    const headers = { Authorization: `Bearer ${token}` };
-    const response = await api.get('/notifications/user-notifications', { headers });
-    const allNotifications = response.data.notifications || [];
-
-    return allNotifications; // Return the notifications array
+    if (enabled) {
+      console.log('Authorization status:', authStatus);
+      return true;
+    }
+    console.log('User declined push notifications');
+    return false;
   } catch (error) {
-    console.error('Error fetching notifications:', error);
-    return []; // Return an empty array in case of error
+    console.error('Error requesting notification permission:', error);
+    return false;
   }
 };
 
-export const clearTaskNotifications = async (message, taskId) => {
-    try {
-      const token = await AsyncStorage.getItem('userToken');
-      if (!token) throw new Error('User token not found');
-  
-      const headers = { Authorization: `Bearer ${token}` };
+export const getFcmToken = async () => {
+  try {
+    const token = await messaging().getToken();
+    console.log('FCM Token:', token);
+    return token;
+  } catch (error) {
+    console.error('Error getting FCM token:', error);
+    return null;
+  }
+};
 
-      // Log to verify taskId and message
-      console.log('Clearing notifications for:', { message, taskId });
+export const registerDeviceForNotifications = async () => {
+  try {
+    const hasPermission = await requestUserPermission();
+    if (!hasPermission) return;
 
-      await api.post('/notifications/clear-task-notifications', { message, taskId }, { headers });
-    } catch (error) {
-      console.error('Error clearing task notifications:', error);
-    }
-  };
+    const fcmToken = await getFcmToken();
+    if (!fcmToken) return;
+
+    const userToken = await AsyncStorage.getItem('userToken');
+    if (!userToken) throw new Error('No user token found');
+
+    await api.post(
+      '/notifications/update-fcm-token',
+      { fcmToken },
+      { headers: { Authorization: `Bearer ${userToken}` }}
+    );
+
+    return fcmToken;
+  } catch (error) {
+    console.error('Error registering device for notifications:', error);
+  }
+};
