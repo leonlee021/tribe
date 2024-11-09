@@ -11,7 +11,6 @@ import { NotificationProvider } from './src/contexts/NotificationContext';
 import NotificationHandler from './src/handlers/NotificationHandler';
 import * as Notifications from 'expo-notifications';
 import { registerDeviceForNotifications } from './src/services/notificationService';
-import { initializeAuth, useAuthStore } from './src/services/authService';
 
 import HomeScreen from './src/screens/HomeScreen';
 import TabBar from './src/components/TabBar';
@@ -67,10 +66,10 @@ export default function App() {
   const Stack = createStackNavigator();
 
   useEffect(() => {
+
     const setupApp = async () => {
       try {
 
-        await initializeAuth();
         // Initialize Firebase if not already initialized
         if (!firebase.apps.length) {
           firebase.initializeApp(firebaseConfig);

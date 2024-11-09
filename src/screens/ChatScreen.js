@@ -10,6 +10,8 @@ import { UserContext } from '../contexts/UserContext';
 import { fetchNotifications, clearTaskNotifications } from '../services/notificationService';
 import { NotificationContext } from '../contexts/NotificationContext';
 import Badge from '../components/Badge.js';
+import { fetchWithSilentAuth, cacheData } from '../services/authService'
+
 
 const ChatScreen = () => {
   const { user } = useContext(UserContext);
@@ -27,51 +29,39 @@ const ChatScreen = () => {
     resetBadgeCounts // We won't use this directly anymore
   } = useContext(NotificationContext);
 
+  // ChatScreen.js
   useEffect(() => {
     const fetchData = async () => {
       if (!user) {
         setIsGuest(true);
         return;
       }
-  
+
       try {
-        const token = await AsyncStorage.getItem('userToken');
-        if (!token) {
-          setIsGuest(true);
-          return;
+        const response = await api.get('/chats');
+        if (response?.data) {
+          setChats(response.data);
+          setIsGuest(false); // Ensure we stay in logged-in view
         }
-  
-        // Fetch chats
-        const response = await api.get('/chats', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        setChats(response.data);
-  
-        // No need to fetch notifications here
       } catch (error) {
-        console.error('Error fetching data:', error);
-        if (error.response && error.response.status === 401) {
-          Alert.alert('Unauthorized', 'Please log in to view your chats.');
-          setIsGuest(true);
+        // Only log non-auth errors, don't set guest mode on auth errors
+        if (!error.response || (error.response.status !== 401 && error.response.status !== 403)) {
+          console.error('Error fetching chats:', error);
         }
+        // Don't set isGuest to true here
       }
     };
-  
-    fetchData();
 
+    fetchData();
     console.log('Current notifications:', notifications);
     console.log('Current badge counts:', badgeCounts);
 
     const unsubscribe = navigation.addListener('focus', () => {
-      fetchNotifications(); // Refresh notifications from context
+      fetchNotifications();
     });
-  
-    return unsubscribe;
-  
-  }, [user, navigation, badgeCounts, fetchNotifications]);
 
+    return unsubscribe;
+  }, [user, navigation, badgeCounts, fetchNotifications]);
 
   // Function to get notification count for a chat
   const getChatNotificationCount = (chatId) => {

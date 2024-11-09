@@ -10,7 +10,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../services/api';
 import { NotificationContext } from '../contexts/NotificationContext';
 import { clearTaskNotifications } from '../services/notificationService';
-
+import { fetchWithSilentAuth } from '../services/authService';
 
 const ActivityScreen = () => {
     const navigation = useNavigation();
@@ -106,26 +106,30 @@ const ActivityScreen = () => {
       
 
       const fetchTasks = async () => {
-        try {
-            const token = await AsyncStorage.getItem('userToken');
-            const headers = token ? { Authorization: `Bearer ${token}` } : {};
-            const response = await api.get('/tasks', { headers });
-            console.log('Tasks fetched in ActivityScreen:', response.data);
-            
-            // Sort tasks so those with notifications appear at the top
-            const tasksWithNotifications = response.data.map(task => {
-                const { offerNotifications, acceptedNotifications, cancelledNotifications, completedNotifications } = getTaskNotificationCount(task.id);
-                return {
-                    ...task,
-                    hasNotification: offerNotifications > 0 || acceptedNotifications > 0 || cancelledNotifications > 0 || completedNotifications > 0
-                };
-            }).sort((a, b) => b.hasNotification - a.hasNotification);
-
-            setTasks(tasksWithNotifications);
-        } catch (error) {
-            console.error('Error fetching tasks:', error);
+        const response = await fetchWithSilentAuth(async () => {
+          return api.get('/tasks');
+        });
+      
+        if (response && response.data) {
+          // Sort tasks so those with notifications appear at the top
+          const tasksWithNotifications = response.data.map(task => {
+            const { offerNotifications, acceptedNotifications, cancelledNotifications, completedNotifications } = 
+              getTaskNotificationCount(task.id);
+            return {
+              ...task,
+              hasNotification: offerNotifications > 0 || 
+                              acceptedNotifications > 0 || 
+                              cancelledNotifications > 0 || 
+                              completedNotifications > 0
+            };
+          }).sort((a, b) => b.hasNotification - a.hasNotification);
+      
+          console.log('Tasks fetched in ActivityScreen:', tasksWithNotifications);
+          setTasks(tasksWithNotifications);
+        } else {
+          setTasks([]);
         }
-    };
+      };
     
 
 
@@ -343,7 +347,7 @@ const ActivityScreen = () => {
     const renderTaskerTab = () => {
         const taskerTasks = tasks.filter(task => 
             task.taskerAcceptedId === user?.id ||  // Task was accepted by this user (tasker)
-            (task.offers && task.offers.some(offer => offer.taskerId === user.id && offer.status === 'cancelled'))
+            (task.offers && user && task.offers.some(offer => offer.taskerId === user.id && offer.status === 'cancelled'))
         );
           
 
@@ -372,7 +376,7 @@ const ActivityScreen = () => {
                         />
                     );
                 }}
-                ListEmptyComponent={<Text style={styles.emptyText}>No tasks as a requester.</Text>}
+                ListEmptyComponent={<Text style={styles.emptyText}>No tasks as a tasker.</Text>}
             />
         );
     };

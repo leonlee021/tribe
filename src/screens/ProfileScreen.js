@@ -14,6 +14,7 @@ import * as ImagePicker from 'expo-image-picker';
 import ProfileTaskPost from '../components/ProfileTaskPost';
 import { UserContext } from '../contexts/UserContext'; // Import UserContext
 import NotificationDebug from '../components/NotificationDebug';
+import { setTestTokenExpiry, fetchWithSilentAuth, cacheData } from '../services/authService'
 
 const ProfileScreen = ({ navigation }) => {
   const { user } = useContext(UserContext); // Consume UserContext to get the current user
@@ -47,148 +48,71 @@ const ProfileScreen = ({ navigation }) => {
 
 
   // Fetch user profile
-// ProfileScreen.js
-const fetchUserProfile = async () => {
-  const token = await AsyncStorage.getItem('userToken');
-  if (token) {
+  const fetchUserProfile = async () => {
     try {
-      let endpoint = '/users/profile'; // Default endpoint for current user
-      if (paramUserId) {
-        endpoint = `/users/${paramUserId}`; // Endpoint for other users
-      }
-      const response = await api.get(endpoint, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      
-      if (paramUserId) {
-        setOtherUser(response.data); // Set otherUser only when viewing another user's profile
-      } else {
-        setOtherUser(null); // Clear otherUser when viewing own profile
-      }
-      setProfilePhoto(response.data.profilePhotoUrl || null); // Set profile photo URL
-      setAverageRating(response.data.averageRating ? parseFloat(response.data.averageRating).toFixed(1) : null);
-      setRatingsCount(response.data.ratingsCount || 0);
-    } catch (error) {
-      // Handle auth errors specifically, but keep using userToken
-      if (error.response?.status === 401 || error.response?.status === 403) {
+      const response = await api.get(paramUserId ? `/users/${paramUserId}` : '/users/profile');
+      if (response?.data) {
         if (paramUserId) {
-          setOtherUser(null);
+          setOtherUser(response.data);
         }
-        setProfilePhoto(null);
-        setAverageRating(null);
-        setRatingsCount(0);
-      } else {
+        setProfilePhoto(response.data.profilePhotoUrl || null);
+        setAverageRating(response.data.averageRating ? parseFloat(response.data.averageRating).toFixed(1) : null);
+        setRatingsCount(response.data.ratingsCount || 0);
+      }
+    } catch (error) {
+      // Only log non-auth errors
+      if (!error.response || (error.response.status !== 401 && error.response.status !== 403)) {
         console.error('Error fetching profile:', error);
       }
     }
-  } else {
-    if (paramUserId) {
-      setOtherUser(null);
-    }
-    setProfilePhoto(null);
-  }
-};
+  };
 
   // Fetch user tasks
   const fetchUserTasks = async (userIdParam) => {
-    const token = await AsyncStorage.getItem('userToken');
-    if (token && userIdParam) {
-      try {
-        // Fetch tasks where the user is the requester
-        const requestedResponse = await api.get(`/tasks/user/${userIdParam}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        // Fetch tasks where the user has been the tasker
-        const taskerResponse = await api.get(`/tasks/tasker/${userIdParam}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        // Fetch cancellations where the tasker is the one who canceled the task
-        const cancellationsResponse = await api.get(`/cancellations/tasker/${userIdParam}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        // Extract tasks
-        const requestedTasks = Array.isArray(requestedResponse.data.tasks)
-          ? requestedResponse.data.tasks
-          : [];
-
-        const allTaskerTasks = Array.isArray(taskerResponse.data.tasks)
-          ? taskerResponse.data.tasks
-          : [];
-
-        const taskerCancellations = Array.isArray(cancellationsResponse.data.cancellations)
-          ? cancellationsResponse.data.cancellations
-          : [];
-
-        // Set tasks requested and tasks completed
-        setTasksRequested(requestedTasks.filter(task => task.status === 'completed'));
-        const completedTasks = allTaskerTasks.filter(task => task.status === 'completed');
-        setTasksCompleted(completedTasks);
-
-        // Set tasksAssigned
-        setTasksAssigned(allTaskerTasks.length);
-
-        // Calculate Completion Rate
-        const canceledByTaskerCount = taskerCancellations.length;
-        const completedByTaskerCount = completedTasks.length;
-
-        if (completedByTaskerCount + canceledByTaskerCount > 0) {
-          const rate = ((completedByTaskerCount / (completedByTaskerCount + canceledByTaskerCount)) * 100).toFixed(1);
-          setCompletionRate(rate);
-        } else {
-          setCompletionRate(null); // No tasks assigned or canceled
-        }
-
-      } catch (error) {
-        console.error('Error fetching user tasks:', error);
-      }
+    if (!userIdParam) return;
+  
+    const [requestedResponse, taskerResponse, cancellationsResponse] = await Promise.all([
+      fetchWithSilentAuth(() => api.get(`/tasks/user/${userIdParam}`)),
+      fetchWithSilentAuth(() => api.get(`/tasks/tasker/${userIdParam}`)),
+      fetchWithSilentAuth(() => api.get(`/cancellations/tasker/${userIdParam}`))
+    ]);
+  
+    // Extract tasks with null checks
+    const requestedTasks = requestedResponse?.data?.tasks || [];
+    const allTaskerTasks = taskerResponse?.data?.tasks || [];
+    const taskerCancellations = cancellationsResponse?.data?.cancellations || [];
+  
+    // Set tasks requested and tasks completed
+    setTasksRequested(requestedTasks.filter(task => task.status === 'completed'));
+    const completedTasks = allTaskerTasks.filter(task => task.status === 'completed');
+    setTasksCompleted(completedTasks);
+  
+    // Set tasksAssigned
+    setTasksAssigned(allTaskerTasks.length);
+  
+    // Calculate Completion Rate
+    const canceledByTaskerCount = taskerCancellations.length;
+    const completedByTaskerCount = completedTasks.length;
+  
+    if (completedByTaskerCount + canceledByTaskerCount > 0) {
+      const rate = ((completedByTaskerCount / (completedByTaskerCount + canceledByTaskerCount)) * 100).toFixed(1);
+      setCompletionRate(rate);
+    } else {
+      setCompletionRate(null);
     }
   };
 
 
   // Fetch hidden tasks
   const fetchHiddenTasks = async () => {
-    try {
-      // Retrieve the token from AsyncStorage
-      const token = await AsyncStorage.getItem('userToken');
-
-      if (!token) {
-        console.error('No user token found.');
-        Alert.alert('Error', 'User authentication token not found.');
-        return;
-      }
-
-
-      // Make the API request to fetch hidden tasks
-      const response = await api.get('/tasks/hidden', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-
-      // Ensure tasks are fetched and handle the response correctly
-      const fetchedHiddenTasks = Array.isArray(response.data.tasks) ? response.data.tasks : [];
-
-
-      setHiddenTasks(fetchedHiddenTasks);
-
-    } catch (error) {
-      // Log the error response in detail
-      console.error('Error fetching hidden tasks:', error.response ? error.response.data : error.message);
-
-      Alert.alert('Error', 'Failed to fetch hidden tasks. Please try again later.');
-      setHiddenTasks([]);
+    const response = await fetchWithSilentAuth(() => api.get('/tasks/hidden'));
+    // Properly handle null response and data structure
+    if (response?.data?.tasks) {
+        setHiddenTasks(response.data.tasks);
+    } else {
+        setHiddenTasks([]);
     }
-  };
+};
 
   // Use focus effect to fetch data when screen is focused
   useFocusEffect(
@@ -208,6 +132,7 @@ const fetchUserProfile = async () => {
   const handleLoginSuccess = async () => {
     setIsModalVisible(false);
     fetchUserProfile();
+    // setTestTokenExpiry();
   };
 
   const onRefresh = async () => {
@@ -478,7 +403,7 @@ const fetchUserProfile = async () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <NotificationDebug />
+      {/* <NotificationDebug /> */}
       {/* Background Gradient */}
       <View style={styles.gradientBackground}>
         <ScrollView
