@@ -34,6 +34,7 @@
     "expo-crypto": "^13.0.2",
     "expo-dev-client": "^4.0.28",
     "expo-font": "~12.0.9",
+    "expo-image-manipulator": "~12.0.5",
     "expo-image-picker": "^15.0.7",
     "expo-linking": "~6.3.1",
     "expo-notifications": "^0.28.19",
@@ -64,8 +65,9 @@
     "react-native-tab-view": "^3.5.2",
     "react-native-vector-icons": "^10.2.0",
     "react-native-web": "~0.19.10",
+    "sharp": "^0.33.5",
     "yup": "^1.4.0",
-    "expo-image-manipulator": "~12.0.5"
+    "zustand": "^5.0.1"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

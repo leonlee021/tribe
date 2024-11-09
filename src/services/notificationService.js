@@ -1,6 +1,42 @@
-import messaging from '@react-native-firebase/messaging';
+// notificationService.js
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from './api';
+import messaging from '@react-native-firebase/messaging';
+import { Platform } from 'react-native';
+
+// Add token management with debouncing
+let tokenUpdatePromise = null;
+let lastTokenUpdate = 0;
+const TOKEN_UPDATE_COOLDOWN = 5000; // 5 seconds cooldown
+
+export const fetchNotifications = async () => {
+  try {
+    const token = await AsyncStorage.getItem('userToken');
+    if (!token) return []; 
+
+    const headers = { Authorization: `Bearer ${token}` };
+    const response = await api.get('/notifications/user-notifications', { headers });
+    return response.data.notifications || [];
+  } catch (error) {
+    console.error('Error fetching notifications:', error);
+    return []; 
+  }
+};
+
+export const clearTaskNotifications = async (message, taskId) => {
+  try {
+    const token = await AsyncStorage.getItem('userToken');
+    if (!token) throw new Error('User token not found');
+
+    const headers = { Authorization: `Bearer ${token}` };
+    await api.post('/notifications/clear-task-notifications', 
+      { message, taskId }, 
+      { headers }
+    );
+  } catch (error) {
+    console.error('Error clearing task notifications:', error);
+  }
+};
 
 export const requestUserPermission = async () => {
   try {
@@ -23,34 +59,144 @@ export const requestUserPermission = async () => {
 
 export const getFcmToken = async () => {
   try {
-    const token = await messaging().getToken();
-    console.log('FCM Token:', token);
-    return token;
+    // Check if we already have a token stored
+    const storedToken = await AsyncStorage.getItem('fcmToken');
+    const currentToken = await messaging().getToken();
+    
+    // Only update if token has changed
+    if (storedToken !== currentToken) {
+      console.log('New FCM Token retrieved:', currentToken);
+      await AsyncStorage.setItem('fcmToken', currentToken);
+      await AsyncStorage.setItem('devicePlatform', Platform.OS);
+      return currentToken;
+    }
+    
+    return storedToken;
   } catch (error) {
     console.error('Error getting FCM token:', error);
     return null;
   }
 };
 
-export const registerDeviceForNotifications = async () => {
+export const updateFcmToken = async (fcmToken) => {
   try {
-    const hasPermission = await requestUserPermission();
-    if (!hasPermission) return;
+    // Check cooldown
+    const now = Date.now();
+    if (now - lastTokenUpdate < TOKEN_UPDATE_COOLDOWN) {
+      console.log('Token update skipped (cooldown)');
+      return true;
+    }
 
-    const fcmToken = await getFcmToken();
-    if (!fcmToken) return;
+    // If there's already an update in progress, wait for it
+    if (tokenUpdatePromise) {
+      return tokenUpdatePromise;
+    }
 
     const userToken = await AsyncStorage.getItem('userToken');
-    if (!userToken) throw new Error('No user token found');
+    if (!userToken) {
+      console.log('No user token found - user might not be logged in');
+      return false;
+    }
 
-    await api.post(
-      '/notifications/update-fcm-token',
-      { fcmToken },
-      { headers: { Authorization: `Bearer ${userToken}` }}
-    );
+    // Store this update attempt
+    lastTokenUpdate = now;
 
-    return fcmToken;
+    tokenUpdatePromise = (async () => {
+      try {
+        // Check if token has changed from what's stored
+        const storedToken = await AsyncStorage.getItem('fcmToken');
+        if (storedToken === fcmToken) {
+          console.log('Token unchanged, skipping update');
+          return true;
+        }
+
+        console.log('Updating FCM token in backend...');
+        const headers = { 
+          Authorization: `Bearer ${userToken}`,
+          'Content-Type': 'application/json'
+        };
+
+        const response = await api.post(
+          '/notifications/update-fcm-token',
+          { 
+            fcmToken,
+            platform: Platform.OS
+          },
+          { headers }
+        );
+        
+        if (response.data.success) {
+          await AsyncStorage.setItem('fcmToken', fcmToken);
+          console.log('FCM token successfully updated');
+          return true;
+        }
+        return false;
+      } catch (error) {
+        console.error('Error updating FCM token:', error);
+        return false;
+      }
+    })();
+
+    return tokenUpdatePromise;
+  } catch (error) {
+    console.error('Error in updateFcmToken:', error);
+    return false;
+  } finally {
+    tokenUpdatePromise = null;
+  }
+};
+
+export const registerDeviceForNotifications = async () => {
+  try {
+    const permission = await requestUserPermission();
+    if (!permission) {
+      console.log('Notification permission not granted');
+      return false;
+    }
+
+    const fcmToken = await getFcmToken();
+    if (!fcmToken) {
+      console.log('Failed to get FCM token');
+      return false;
+    }
+
+    // Set up token refresh handler
+    const unsubscribeTokenRefresh = messaging().onTokenRefresh(async (newToken) => {
+      console.log('FCM Token refreshed');
+      await updateFcmToken(newToken);
+    });
+
+    // Update backend with current token
+    const success = await updateFcmToken(fcmToken);
+    if (!success) {
+      console.log('Failed to update FCM token in backend');
+      unsubscribeTokenRefresh();
+      return false;
+    }
+
+    return true;
   } catch (error) {
     console.error('Error registering device for notifications:', error);
+    return false;
   }
+};
+
+export const debugTokens = async () => {
+  const fcmToken = await AsyncStorage.getItem('fcmToken');
+  const userToken = await AsyncStorage.getItem('userToken');
+  console.log('Stored Tokens:', {
+    fcmToken,
+    hasUserToken: !!userToken
+  });
+  return { fcmToken, hasUserToken: !!userToken };
+};
+
+export default {
+  fetchNotifications,
+  clearTaskNotifications,
+  requestUserPermission,
+  getFcmToken,
+  updateFcmToken,
+  registerDeviceForNotifications,
+  debugTokens
 };

@@ -1,97 +1,108 @@
 // NotificationContext.js
-
-import React, { createContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import * as Notifications from 'expo-notifications';
-import { fetchNotifications } from '../services/notificationService';
 import { AppState } from 'react-native';
+import { fetchNotifications } from '../services/notificationService';
+import messaging from '@react-native-firebase/messaging';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const NotificationContext = createContext();
 
+// NotificationContext.js
 export const NotificationProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
   const [badgeCounts, setBadgeCounts] = useState({
     activity: 0,
     chat: 0,
   });
+  const [isNotificationSetup, setIsNotificationSetup] = useState(false);
 
-  // Function to fetch notifications and update state
-  const fetchAndSetNotifications = async () => {
+  const updateBadgeCounts = useCallback(() => {
+    const chatCount = notifications.filter(n => n.type === 'chat' && !n.isRead).length;
+    const activityCount = notifications.filter(n => n.type === 'activity' && !n.isRead).length;
+
+    console.log('Updating badge counts:', { chat: chatCount, activity: activityCount });
+    
+    setBadgeCounts({
+      chat: chatCount,
+      activity: activityCount
+    });
+  }, [notifications]);
+
+  const handleNewNotification = useCallback((remoteMessage) => {
+    console.log('Handling new notification in context:', remoteMessage);
+    
+    const type = remoteMessage?.data?.type;
+    const messageId = remoteMessage.messageId;
+    
+    if (!type) {
+      console.log('No type in notification data');
+      return;
+    }
+
+    setNotifications(prev => {
+      // Check if notification already exists
+      if (prev.some(n => n.id === messageId)) {
+        console.log('Notification already exists:', messageId);
+        return prev;
+      }
+
+      const newNotification = {
+        id: messageId,
+        type: type,
+        chatId: remoteMessage.data?.chatId,
+        taskId: remoteMessage.data?.taskId,
+        message: remoteMessage.data?.messageType || 'new message',
+        isRead: false,
+        createdAt: new Date().toISOString()
+      };
+
+      console.log('Adding new notification:', newNotification);
+      return [newNotification, ...prev];
+    });
+  }, []);
+
+  // Update badge counts whenever notifications change
+  useEffect(() => {
+    console.log('Notifications changed, updating badge counts');
+    updateBadgeCounts();
+  }, [notifications, updateBadgeCounts]);
+
+  const fetchAndSetNotifications = useCallback(async () => {
     try {
-      const allNotifications = await fetchNotifications(); // Fetch notifications
-      console.log('Fetched Notifications:', allNotifications); // Debug log
-
-      setNotifications(allNotifications); // Update notifications state
-
-      // Update badge counts
-      const activityNotifications = allNotifications.filter(n => n.type === 'activity');
-      const chatNotifications = allNotifications.filter(n => n.type === 'chat');
-
-      setBadgeCounts({
-        activity: activityNotifications.length,
-        chat: chatNotifications.length,
-      });
-
-      console.log('Badge Counts Updated:', {
-        activity: activityNotifications.length,
-        chat: chatNotifications.length,
-      }); // Debug log
+      const allNotifications = await fetchNotifications();
+      console.log('Fetched notifications:', allNotifications);
+      setNotifications(allNotifications);
     } catch (error) {
       console.error('Error fetching notifications:', error);
     }
-  };
-
-  useEffect(() => {
-    fetchAndSetNotifications();
-
-    // Handle foreground notifications
-    const subscription = Notifications.addNotificationReceivedListener(notification => {
-      const newNotification = notification.request.content.data;
-      console.log('Received Notification:', newNotification); // Debug log
-      setNotifications(prev => [newNotification, ...prev]);
-
-      // Update badge counts based on the notification type
-      if (newNotification.type === 'activity') {
-        setBadgeCounts(prev => ({
-          ...prev,
-          activity: prev.activity + 1,
-        }));
-      } else if (newNotification.type === 'chat') {
-        setBadgeCounts(prev => ({ ...prev, chat: prev.chat + 1 }));
-      }
-    });
-
-    // Handle app state changes
-    const appStateListener = AppState.addEventListener('change', nextAppState => {
-      if (nextAppState === 'active') {
-        console.log('App has come to the foreground');
-        fetchAndSetNotifications();
-      }
-    });
-
-    return () => {
-      subscription.remove();
-      appStateListener.remove();
-    };
   }, []);
 
-  // Function to reset badge counts
-  const resetBadgeCounts = (type) => {
-    if (type === 'activity') {
-      setBadgeCounts(prev => ({ ...prev, activity: 0 }));
-    } else if (type === 'chat') {
-      setBadgeCounts(prev => ({ ...prev, chat: 0 }));
+  useEffect(() => {
+    if (!isNotificationSetup) {
+      console.log('Setting up initial notifications');
+      fetchAndSetNotifications();
+      setIsNotificationSetup(true);
     }
-  };
+  }, [isNotificationSetup, fetchAndSetNotifications]);
+
+  const markAsRead = useCallback((id) => {
+    console.log('Marking notification as read:', id);
+    setNotifications(prev =>
+      prev.map(n => (n.id === id ? { ...n, isRead: true } : n))
+    );
+  }, []);
+
+  const contextValue = useMemo(() => ({
+    notifications,
+    badgeCounts,
+    handleNewNotification,
+    fetchNotifications: fetchAndSetNotifications,
+    markAsRead,
+  }), [notifications, badgeCounts, handleNewNotification, fetchAndSetNotifications, markAsRead]);
 
   return (
-    <NotificationContext.Provider
-      value={{
-        notifications,
-        badgeCounts,
-        fetchNotifications: fetchAndSetNotifications, // Expose fetchAndSetNotifications
-        resetBadgeCounts, // Expose resetBadgeCounts
-      }}
-    >
+    <NotificationContext.Provider value={contextValue}>
       {children}
     </NotificationContext.Provider>
   );

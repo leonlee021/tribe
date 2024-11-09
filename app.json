@@ -4,7 +4,7 @@
     "slug": "mutually",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/logo.png",
     "scheme": "mutually",
     "userInterfaceStyle": "automatic",
     "splash": {
@@ -15,8 +15,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.leonlee021.mutually",
-      "googleServicesFile": "./GoogleService-Info.plist",
-      "buildNumber": "2"
+      "googleServicesFile": "./GoogleService-Info.plist"
     },
     "android": {
       "adaptiveIcon": {

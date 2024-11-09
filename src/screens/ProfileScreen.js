@@ -13,6 +13,7 @@ import LoginPromptModal from '../components/LoginModal';
 import * as ImagePicker from 'expo-image-picker';
 import ProfileTaskPost from '../components/ProfileTaskPost';
 import { UserContext } from '../contexts/UserContext'; // Import UserContext
+import NotificationDebug from '../components/NotificationDebug';
 
 const ProfileScreen = ({ navigation }) => {
   const { user } = useContext(UserContext); // Consume UserContext to get the current user
@@ -46,41 +47,49 @@ const ProfileScreen = ({ navigation }) => {
 
 
   // Fetch user profile
-  const fetchUserProfile = async () => {
-    const token = await AsyncStorage.getItem('userToken');
-    if (token) {
-      try {
-        let endpoint = '/users/profile'; // Default endpoint for current user
+// ProfileScreen.js
+const fetchUserProfile = async () => {
+  const token = await AsyncStorage.getItem('userToken');
+  if (token) {
+    try {
+      let endpoint = '/users/profile'; // Default endpoint for current user
+      if (paramUserId) {
+        endpoint = `/users/${paramUserId}`; // Endpoint for other users
+      }
+      const response = await api.get(endpoint, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      
+      if (paramUserId) {
+        setOtherUser(response.data); // Set otherUser only when viewing another user's profile
+      } else {
+        setOtherUser(null); // Clear otherUser when viewing own profile
+      }
+      setProfilePhoto(response.data.profilePhotoUrl || null); // Set profile photo URL
+      setAverageRating(response.data.averageRating ? parseFloat(response.data.averageRating).toFixed(1) : null);
+      setRatingsCount(response.data.ratingsCount || 0);
+    } catch (error) {
+      // Handle auth errors specifically, but keep using userToken
+      if (error.response?.status === 401 || error.response?.status === 403) {
         if (paramUserId) {
-          endpoint = `/users/${paramUserId}`; // Endpoint for other users
+          setOtherUser(null);
         }
-        const response = await api.get(endpoint, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        
-        if (paramUserId) {
-          setOtherUser(response.data); // Set otherUser only when viewing another user's profile
-        } else {
-          setOtherUser(null); // Clear otherUser when viewing own profile
-        }
-
-        setProfilePhoto(response.data.profilePhotoUrl || null); // Set profile photo URL
-
-        setAverageRating(response.data.averageRating ? parseFloat(response.data.averageRating).toFixed(1) : null);
-        setRatingsCount(response.data.ratingsCount || 0);
-
-      } catch (error) {
+        setProfilePhoto(null);
+        setAverageRating(null);
+        setRatingsCount(0);
+      } else {
         console.error('Error fetching profile:', error);
       }
-    } else {
-      if (paramUserId) {
-        setOtherUser(null);
-      }
-      setProfilePhoto(null);
     }
-  };
+  } else {
+    if (paramUserId) {
+      setOtherUser(null);
+    }
+    setProfilePhoto(null);
+  }
+};
 
   // Fetch user tasks
   const fetchUserTasks = async (userIdParam) => {
@@ -469,6 +478,7 @@ const ProfileScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
+      <NotificationDebug />
       {/* Background Gradient */}
       <View style={styles.gradientBackground}>
         <ScrollView

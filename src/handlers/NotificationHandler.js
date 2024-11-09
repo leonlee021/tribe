@@ -1,64 +1,106 @@
-// src/handlers/NotificationHandler.js
+// NotificationHandler.js
 import React, { useEffect, useContext } from 'react';
-import messaging from '@react-native-firebase/messaging';
-import { Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NotificationContext } from '../contexts/NotificationContext';
 import { registerDeviceForNotifications } from '../services/notificationService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import messaging from '@react-native-firebase/messaging';
 
 const NotificationHandler = () => {
   const navigation = useNavigation();
-  const { resetBadgeCounts, fetchNotifications } = useContext(NotificationContext);
+  const { handleNewNotification } = useContext(NotificationContext);
 
   useEffect(() => {
-    const setupNotifications = async () => {
-      // Register device for notifications
-      await registerDeviceForNotifications();
+    let foregroundSubscription;
+    
+    const initializeNotifications = async () => {
+      try {
+        // Request permissions first
+        const authStatus = await messaging().requestPermission();
+        const enabled =
+          authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+          authStatus === messaging.AuthorizationStatus.PROVISIONAL;
 
-      // Handle notifications when app is in background
-      messaging().setBackgroundMessageHandler(async remoteMessage => {
-        console.log('Message handled in the background:', remoteMessage);
-      });
-
-      // Handle notifications when app is in foreground
-      const unsubscribe = messaging().onMessage(async remoteMessage => {
-        console.log('Received foreground message:', remoteMessage);
-        fetchNotifications();
-      });
-
-      // Handle notification open
-      messaging().onNotificationOpenedApp(remoteMessage => {
-        console.log('Notification opened app:', remoteMessage);
-        if (remoteMessage.data?.type === 'activity') {
-          navigation.navigate('ActivityScreen');
-          resetBadgeCounts('activity');
-        } else if (remoteMessage.data?.type === 'chat') {
-          navigation.navigate('ChatScreen');
-          resetBadgeCounts('chat');
+        console.log('Notification authorization status:', authStatus);
+        
+        if (!enabled) {
+          console.log('Notifications not enabled');
+          return;
         }
-      });
 
-      // Check if app was opened from a notification
-      messaging()
-        .getInitialNotification()
-        .then(remoteMessage => {
-          if (remoteMessage) {
-            console.log('App opened from quit state:', remoteMessage);
-            if (remoteMessage.data?.type === 'activity') {
-              navigation.navigate('ActivityScreen');
-              resetBadgeCounts('activity');
-            } else if (remoteMessage.data?.type === 'chat') {
-              navigation.navigate('ChatScreen');
-              resetBadgeCounts('chat');
-            }
-          }
+        // Get FCM token
+        const token = await messaging().getToken();
+        console.log('Current FCM token:', token);
+
+        // Set up foreground handler
+        foregroundSubscription = messaging().onMessage(remoteMessage => {
+          console.log('🔵 Foreground message received:', remoteMessage);
+          handleNewNotification(remoteMessage);
         });
 
-      return unsubscribe;
+        // Set up background handler
+        messaging().setBackgroundMessageHandler(async remoteMessage => {
+          console.log('🔵 Background message received:', remoteMessage);
+          handleNewNotification(remoteMessage);
+          return Promise.resolve();
+        });
+
+        // Handle notification open events
+        messaging().onNotificationOpenedApp(remoteMessage => {
+          console.log('🔵 Notification opened app:', remoteMessage);
+          handleNewNotification(remoteMessage);
+        });
+
+        // Check for initial notification
+        const initialNotification = await messaging().getInitialNotification();
+        if (initialNotification) {
+          console.log('🔵 Initial notification:', initialNotification);
+          handleNewNotification(initialNotification);
+        }
+
+        // Add token refresh handler
+        messaging().onTokenRefresh(token => {
+          console.log('🔵 FCM token refreshed:', token);
+        });
+
+        // Add error handler
+        messaging().onError(error => {
+          console.error('🔴 FCM error:', error);
+        });
+
+      } catch (error) {
+        console.error('🔴 Error setting up notifications:', error);
+      }
     };
 
-    setupNotifications();
-  }, [navigation, resetBadgeCounts, fetchNotifications]);
+    console.log('🟡 Setting up notification handlers...');
+    initializeNotifications();
+
+    // Cleanup
+    return () => {
+      console.log('🟡 Cleaning up notification handlers...');
+      if (foregroundSubscription) {
+        foregroundSubscription();
+      }
+    };
+  }, [handleNewNotification]);
+
+  // Add periodic permission check
+  useEffect(() => {
+    const checkPermissions = async () => {
+      try {
+        const authStatus = await messaging().hasPermission();
+        console.log('🟡 Current notification permission status:', authStatus);
+      } catch (error) {
+        console.error('🔴 Error checking notification permissions:', error);
+      }
+    };
+
+    checkPermissions();
+    const interval = setInterval(checkPermissions, 10000); // Check every 10 seconds
+
+    return () => clearInterval(interval);
+  }, []);
 
   return null;
 };

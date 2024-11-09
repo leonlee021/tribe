@@ -10,6 +10,8 @@ import { UserProvider } from './src/contexts/UserContext';
 import { NotificationProvider } from './src/contexts/NotificationContext';
 import NotificationHandler from './src/handlers/NotificationHandler';
 import * as Notifications from 'expo-notifications';
+import { registerDeviceForNotifications } from './src/services/notificationService';
+import { initializeAuth, useAuthStore } from './src/services/authService';
 
 import HomeScreen from './src/screens/HomeScreen';
 import TabBar from './src/components/TabBar';
@@ -61,41 +63,33 @@ const options = {
   cardStyle: { opacity: 1 },
 };
 
-// Register for notifications and handle permissions
-async function registerForPushNotificationsAsync() {
-  const { status: existingStatus } = await Notifications.getPermissionsAsync();
-  let finalStatus = existingStatus;
-
-  if (existingStatus !== 'granted') {
-    const { status } = await Notifications.requestPermissionsAsync();
-    finalStatus = status;
-  }
-
-  if (finalStatus !== 'granted') {
-    alert('Failed to get push token for push notification!');
-    return;
-  }
-
-  const token = (await Notifications.getExpoPushTokenAsync()).data;
-  console.log('Expo Push Token:', token);
-  return token;
-}
-
-
 export default function App() {
   const Stack = createStackNavigator();
 
   useEffect(() => {
-    registerForPushNotificationsAsync();
+    const setupApp = async () => {
+      try {
 
-    // Set notification handler to control notification behavior
-    Notifications.setNotificationHandler({
-      handleNotification: async () => ({
-        shouldShowAlert: true,
-        shouldPlaySound: true,
-        shouldSetBadge: true,
-      }),
-    });
+        await initializeAuth();
+        // Initialize Firebase if not already initialized
+        if (!firebase.apps.length) {
+          firebase.initializeApp(firebaseConfig);
+          console.log('Firebase initialized');
+        }
+
+        // Register device for notifications
+        const registered = await registerDeviceForNotifications();
+        if (registered) {
+          console.log('Device successfully registered for notifications');
+        } else {
+          console.log('Failed to register device for notifications');
+        }
+      } catch (error) {
+        console.error('Error setting up app:', error);
+      }
+    };
+
+    setupApp();
   }, []);
 
   return (

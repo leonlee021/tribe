@@ -13,12 +13,19 @@ import Badge from '../components/Badge.js';
 
 const ChatScreen = () => {
   const { user } = useContext(UserContext);
-  const { badgeCounts, setBadgeCounts, notifications, fetchNotifications } = useContext(NotificationContext); 
   const [chats, setChats] = useState([]);
   const [isGuest, setIsGuest] = useState(false);
   const [selectedTab, setSelectedTab] = useState('requester'); // 'requester' or 'tasker'
   const navigation = useNavigation();
   const route = useRoute();
+  const { 
+    badgeCounts, 
+    notifications, 
+    fetchNotifications,
+    unreadChats,
+    markChatAsRead,
+    resetBadgeCounts // We won't use this directly anymore
+  } = useContext(NotificationContext);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -54,49 +61,60 @@ const ChatScreen = () => {
   
     fetchData();
 
+    console.log('Current notifications:', notifications);
+    console.log('Current badge counts:', badgeCounts);
+
     const unsubscribe = navigation.addListener('focus', () => {
       fetchNotifications(); // Refresh notifications from context
     });
   
     return unsubscribe;
   
-  }, [user, navigation, fetchNotifications]);
-  
+  }, [user, navigation, badgeCounts, fetchNotifications]);
+
 
   // Function to get notification count for a chat
-  const getChatNotificationCount = (taskId) => {
-    return notifications.filter(
-      (n) => n.taskId === taskId && n.message === 'new message' && !n.isRead
+  const getChatNotificationCount = (chatId) => {
+    return notifications.filter(n => 
+      n.type === 'chat' && 
+      n.chatId === chatId && 
+      !n.isRead
     ).length;
   };
 
   // Function to get total unread notifications for "Requester" and "Tasker" tabs
   const getTotalTabNotifications = () => {
-    const requesterChats = chats.filter(chat => chat.requesterId === user.id);
-    const taskerChats = chats.filter(chat => chat.taskerId === user.id);
+    const requesterChats = chats.filter(chat => chat.requesterId === user?.id);
+    const taskerChats = chats.filter(chat => chat.taskerId === user?.id);
 
-    const requesterNotificationCount = requesterChats.reduce((total, chat) => {
-      return total + getChatNotificationCount(chat.taskId);
-    }, 0);
+    const requesterNotificationCount = notifications.filter(n =>
+      n.type === 'chat' &&
+      !n.isRead &&
+      requesterChats.some(chat => chat.id === n.chatId)
+    ).length;
 
-    const taskerNotificationCount = taskerChats.reduce((total, chat) => {
-      return total + getChatNotificationCount(chat.taskId);
-    }, 0);
+    const taskerNotificationCount = notifications.filter(n =>
+      n.type === 'chat' &&
+      !n.isRead &&
+      taskerChats.some(chat => chat.id === n.chatId)
+    ).length;
 
     return { requesterNotificationCount, taskerNotificationCount };
   };
 
   const { requesterNotificationCount, taskerNotificationCount } = getTotalTabNotifications();
 
+  const handleTabPress = (tab) => {
+    setSelectedTab(tab);
+    // Don't clear notifications here - let them clear when individual chats are opened
+  };
 
   // Function to handle chat press
   const handleChatPress = async (chat) => {
-    const taskId = chat.taskId;
-  
-    // Clear notifications for this chat
-    await clearTaskNotifications('new message', taskId);
-    await fetchNotifications();
-    // Navigate to ChatDetailScreen
+    // Clear notifications for this specific chat
+    await clearTaskNotifications('new message', chat.taskId);
+    await fetchNotifications(); // This will update the notifications list
+    
     navigation.navigate('ChatDetailScreen', {
       chatId: chat.id,
       chatWith: selectedTab === 'requester' ? chat.taskerName : chat.requesterName,
@@ -105,18 +123,8 @@ const ChatScreen = () => {
   
 
   const renderChatItem = ({ item }) => {
-    let chatText = '';
-    let chatWith = '';
-
-    if (selectedTab === 'requester') {
-      chatText = `${item.taskerName}`;
-      chatWith = item.taskerName;
-    } else {
-      chatText = `${item.requesterName}`;
-      chatWith = item.requesterName;
-    }
-
-    const unreadCount = getChatNotificationCount(item.taskId);
+    const unreadCount = getChatNotificationCount(item.id);
+    let chatText = selectedTab === 'requester' ? item.taskerName : item.requesterName;
 
     return (
       <TouchableOpacity
@@ -130,9 +138,7 @@ const ChatScreen = () => {
           </View>
           {unreadCount > 0 && (
             <View style={styles.notificationBadge}>
-              <Text style={styles.notificationBadgeText}>
-                {unreadCount}
-              </Text>
+              <Text style={styles.notificationBadgeText}>{unreadCount}</Text>
             </View>
           )}
           <Icon name="chevron-right" size={20} color="#ccc" />
@@ -168,7 +174,7 @@ const ChatScreen = () => {
             styles.tabButton,
             selectedTab === 'requester' && styles.activeTabButton,
           ]}
-          onPress={() => setSelectedTab('requester')}
+          onPress={() => handleTabPress('requester')}
         >
           <Text style={styles.tabButtonText}>As Requester</Text>
           {requesterNotificationCount > 0 && (
@@ -188,7 +194,7 @@ const ChatScreen = () => {
             styles.tabButton,
             selectedTab === 'tasker' && styles.activeTabButton,
           ]}
-          onPress={() => setSelectedTab('tasker')}
+          onPress={() => handleTabPress('tasker')}
         >
           <Text style={styles.tabButtonText}>As Tasker</Text>
           {taskerNotificationCount > 0 && (

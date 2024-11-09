@@ -10,21 +10,22 @@
       "env": {
         "ENVIRONMENT": "development"
       },
-      "cache": {
-        "key": "development-{{timestamp}}",
-        "paths": [
-          "node_modules/**/*"
-        ]
-      },
       "ios": {
-        "resourceClass": "m1-medium"
+        "resourceClass": "m-medium",
+        "buildConfiguration": "Debug"
       }
     },
     "preview": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "ios": {
+        "resourceClass": "m-medium"
+      }
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "ios": {
+        "resourceClass": "m-medium"
+      }
     }
   },
   "submit": {
