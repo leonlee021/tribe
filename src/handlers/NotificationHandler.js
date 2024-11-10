@@ -33,39 +33,55 @@ const NotificationHandler = () => {
         console.log('Current FCM token:', token);
 
         // Set up foreground handler
-        foregroundSubscription = messaging().onMessage(remoteMessage => {
-          console.log('🔵 Foreground message received:', remoteMessage);
-          handleNewNotification(remoteMessage);
+        foregroundSubscription = messaging().onMessage(async remoteMessage => {
+          try {
+            console.log('🔵 Foreground message received:', remoteMessage);
+            await handleNewNotification(remoteMessage);
+          } catch (error) {
+            console.error('Error handling foreground message:', error);
+          }
         });
 
         // Set up background handler
         messaging().setBackgroundMessageHandler(async remoteMessage => {
-          console.log('🔵 Background message received:', remoteMessage);
-          handleNewNotification(remoteMessage);
+          try {
+            console.log('🔵 Background message received:', remoteMessage);
+            await handleNewNotification(remoteMessage);
+          } catch (error) {
+            console.error('Error handling background message:', error);
+          }
           return Promise.resolve();
         });
 
         // Handle notification open events
-        messaging().onNotificationOpenedApp(remoteMessage => {
-          console.log('🔵 Notification opened app:', remoteMessage);
-          handleNewNotification(remoteMessage);
+        messaging().onNotificationOpenedApp(async remoteMessage => {
+          try {
+            console.log('🔵 Notification opened app:', remoteMessage);
+            await handleNewNotification(remoteMessage);
+          } catch (error) {
+            console.error('Error handling notification open:', error);
+          }
         });
 
         // Check for initial notification
         const initialNotification = await messaging().getInitialNotification();
         if (initialNotification) {
-          console.log('🔵 Initial notification:', initialNotification);
-          handleNewNotification(initialNotification);
+          try {
+            console.log('🔵 Initial notification:', initialNotification);
+            await handleNewNotification(initialNotification);
+          } catch (error) {
+            console.error('Error handling initial notification:', error);
+          }
         }
 
         // Add token refresh handler
-        messaging().onTokenRefresh(token => {
-          console.log('🔵 FCM token refreshed:', token);
-        });
-
-        // Add error handler
-        messaging().onError(error => {
-          console.error('🔴 FCM error:', error);
+        messaging().onTokenRefresh(async newToken => {
+          try {
+            console.log('🔵 FCM token refreshed:', newToken);
+            await AsyncStorage.setItem('fcmToken', newToken);
+          } catch (error) {
+            console.error('Error handling token refresh:', error);
+          }
         });
 
       } catch (error) {
@@ -74,7 +90,9 @@ const NotificationHandler = () => {
     };
 
     console.log('🟡 Setting up notification handlers...');
-    initializeNotifications();
+    initializeNotifications().catch(error => {
+      console.error('🔴 Unhandled error in notification setup:', error);
+    });
 
     // Cleanup
     return () => {
