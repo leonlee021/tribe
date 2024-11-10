@@ -31,6 +31,7 @@ export const UserProvider = ({ children }) => {
     setIsLoading(false);
   };
 
+
   useEffect(() => {
     fetchUserProfile();
   }, []);

@@ -59,12 +59,12 @@ const HiddenTasksScreen = ({ navigation }) => {
   // Handle Unhide Task
   const handleUnhideTask = (taskId) => {
     Alert.alert(
-      'Confirm Unhide',
-      'Are you sure you want to unhide this task?',
+      'Confirm Unarchive',
+      'Are you sure you want to unarchive this task?',
       [
         { text: 'Cancel', style: 'cancel' },
         { 
-          text: 'Unhide', 
+          text: 'Unarchive', 
           style: 'default', 
           onPress: async () => {
             try {

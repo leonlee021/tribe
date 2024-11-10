@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../services/api';
+import { UserContext } from '../contexts/UserContext'; 
 
 const EditProfileScreen = ({ navigation }) => {
+  const { fetchUserProfile } = useContext(UserContext); 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [about, setAbout] = useState('');
@@ -54,14 +56,26 @@ const EditProfileScreen = ({ navigation }) => {
         gender,
       };
 
-      await api.put('/users/profile', updatedData, {
+      const response = await api.put('/users/profile', updatedData, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
-      Alert.alert('Success', 'Profile updated successfully!');
-      navigation.goBack(); // This will navigate back to the ProfileScreen
+      if (response.data) {
+        // Update the global user context
+        await fetchUserProfile();
+        
+        Alert.alert('Success', 'Profile updated successfully!', [
+          {
+            text: 'OK',
+            onPress: () => {
+              // Force a fresh reload of the profile screen
+              navigation.navigate('ProfileScreen', { refresh: Date.now() });
+            }
+          }
+        ]);
+      }
     } catch (error) {
       console.error('Error updating profile:', error);
       Alert.alert('Error', 'Failed to update profile. Please try again.');

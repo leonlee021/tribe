@@ -17,7 +17,7 @@ import NotificationDebug from '../components/NotificationDebug';
 import { setTestTokenExpiry, fetchWithSilentAuth, cacheData } from '../services/authService'
 
 const ProfileScreen = ({ navigation }) => {
-  const { user } = useContext(UserContext); // Consume UserContext to get the current user
+  const { user, setUser, fetchUserProfile } = useContext(UserContext); // Consume UserContext to get the current user
   const route = useRoute();
   const { userId: paramUserId } = route.params || {};  // Optional userId parameter
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -32,6 +32,7 @@ const ProfileScreen = ({ navigation }) => {
   const [ratingsCount, setRatingsCount] = useState(0); // New state for ratingsCount
   const [tasksAssigned, setTasksAssigned] = useState(0);
   const [completionRate, setCompletionRate] = useState(null);  
+  const [profileVersion, setProfileVersion] = useState(0);
 
   const isOwnProfile = !paramUserId;
   const [otherUser, setOtherUser] = useState(null); // State for other user's profile
@@ -48,21 +49,24 @@ const ProfileScreen = ({ navigation }) => {
 
 
   // Fetch user profile
-  const fetchUserProfile = async () => {
+  const loadProfileData = async () => {
     try {
-      const response = await api.get(paramUserId ? `/users/${paramUserId}` : '/users/profile');
-      if (response?.data) {
-        if (paramUserId) {
+      if (paramUserId) {
+        // For other users' profiles
+        const response = await api.get(`/users/${paramUserId}`);
+        if (response?.data) {
           setOtherUser(response.data);
+          setProfilePhoto(response.data.profilePhotoUrl || null);
+          setAverageRating(response.data.averageRating ? parseFloat(response.data.averageRating).toFixed(1) : null);
+          setRatingsCount(response.data.ratingsCount || 0);
         }
-        setProfilePhoto(response.data.profilePhotoUrl || null);
-        setAverageRating(response.data.averageRating ? parseFloat(response.data.averageRating).toFixed(1) : null);
-        setRatingsCount(response.data.ratingsCount || 0);
+      } else {
+        // For own profile, use context's fetchUserProfile
+        await fetchUserProfile();
       }
     } catch (error) {
-      // Only log non-auth errors
       if (!error.response || (error.response.status !== 401 && error.response.status !== 403)) {
-        console.error('Error fetching profile:', error);
+        console.error('Error loading profile:', error);
       }
     }
   };
@@ -117,8 +121,8 @@ const ProfileScreen = ({ navigation }) => {
   // Use focus effect to fetch data when screen is focused
   useFocusEffect(
     useCallback(() => {
-      fetchUserProfile();
-    }, [paramUserId, user]) // Depend on `paramUserId` to refetch when viewing different profiles
+      loadProfileData();
+    }, [paramUserId, route.params?.refresh])
   );
 
   // Fetch tasks when the displayedUser changes
@@ -129,6 +133,14 @@ const ProfileScreen = ({ navigation }) => {
     }
   }, [displayedUser]);
 
+  useEffect(() => {
+    if (!paramUserId && user) {
+      setProfilePhoto(user.profilePhotoUrl || null);
+      setAverageRating(user.averageRating ? parseFloat(user.averageRating).toFixed(1) : null);
+      setRatingsCount(user.ratingsCount || 0);
+    }
+  }, [user, paramUserId]);
+
   const handleLoginSuccess = async () => {
     setIsModalVisible(false);
     fetchUserProfile();
@@ -137,14 +149,14 @@ const ProfileScreen = ({ navigation }) => {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await fetchUserProfile();  // Re-fetch user profile on refresh
+    await loadProfileData();
     if (displayedUser && displayedUser.id) {
-      await fetchUserTasks(displayedUser.id);     // Re-fetch tasks
+      await fetchUserTasks(displayedUser.id);
+      await fetchHiddenTasks();
     }
-    await fetchHiddenTasks(); 
     setRefreshing(false);
   };
-
+  
   const selectProfilePhoto = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
@@ -298,12 +310,12 @@ const ProfileScreen = ({ navigation }) => {
   // Handle Hide Task with confirmation
   const handleHideTask = (taskId) => {
     Alert.alert(
-      'Confirm Hide',
-      'Are you sure you want to hide this task?',
+      'Confirm Archive',
+      'Are you sure you want to archive this task?',
       [
         { text: 'Cancel', style: 'cancel' },
         { 
-          text: 'Hide', 
+          text: 'Archive', 
           style: 'destructive', 
           onPress: async () => {
             try {
@@ -311,12 +323,12 @@ const ProfileScreen = ({ navigation }) => {
               await api.post(`/tasks/${taskId}/hide`, {}, {
                 headers: { Authorization: `Bearer ${token}` },
               });
-              Alert.alert('Success', 'Task hidden from your view.');
+              Alert.alert('Success', 'Task archived from your view.');
               fetchUserTasks(displayedUser.id); // Refresh the task list
               fetchHiddenTasks(); // Refresh hidden tasks
             } catch (error) {
-              console.error('Error hiding task:', error);
-              Alert.alert('Error', 'Failed to hide the task.');
+              console.error('Error archiving task:', error);
+              Alert.alert('Error', 'Failed to archive the task.');
             }
           } 
         },
