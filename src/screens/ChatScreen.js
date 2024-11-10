@@ -135,47 +135,30 @@ const ChatScreen = () => {
   return (
     <SafeAreaView style={styles.container}>
       {/* Tabs */}
+      {/* Tabs for switching between perspectives */}
       <View style={styles.tabContainer}>
-        <TouchableOpacity
-          style={[
-            styles.tabButton,
-            selectedTab === 'requester' && styles.activeTabButton,
-          ]}
-          onPress={() => handleTabPress('requester')}
-        >
-          <Text style={styles.tabButtonText}>As Requester</Text>
-          {requesterNotificationCount > 0 && (
-            <View style={styles.notificationBadge}>
-              <Text style={styles.notificationBadgeText}>{requesterNotificationCount}</Text>
-            </View>
-          )}
-          <Icon
-            name="user"
-            size={20}
-            color={selectedTab === 'requester' ? '#3717ce' : '#333'}
-            style={styles.tabIcon}
-          />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[
-            styles.tabButton,
-            selectedTab === 'tasker' && styles.activeTabButton,
-          ]}
-          onPress={() => handleTabPress('tasker')}
-        >
-          <Text style={styles.tabButtonText}>As Tasker</Text>
-          {taskerNotificationCount > 0 && (
-            <View style={styles.notificationBadge}>
-              <Text style={styles.notificationBadgeText}>{taskerNotificationCount}</Text>
-            </View>
-          )}
-          <Icon
-            name="briefcase"
-            size={20}
-            color={selectedTab === 'tasker' ? '#3717ce' : '#333'}
-            style={styles.tabIcon}
-          />
-        </TouchableOpacity>
+          <TouchableOpacity
+              style={[styles.tabButton, selectedTab === 'requester' && styles.activeTab]}
+              onPress={() => handleTabPress('requester')}
+          >
+              <Text style={styles.tabText}>Requester</Text>
+              {requesterNotificationCount > 0 && (
+                  <View style={styles.notificationBadge}>
+                      <Text style={styles.notificationBadgeText}>{requesterNotificationCount}</Text>
+                  </View>
+              )}
+          </TouchableOpacity>
+          <TouchableOpacity
+              style={[styles.tabButton, selectedTab === 'tasker' && styles.activeTab]}
+              onPress={() => handleTabPress('tasker')}
+          >
+              <Text style={styles.tabText}>Tasker</Text>
+              {taskerNotificationCount > 0 && (
+                  <View style={styles.notificationBadge}>
+                      <Text style={styles.notificationBadgeText}>{taskerNotificationCount}</Text>
+                  </View>
+              )}
+          </TouchableOpacity>
       </View>
 
       {/* Chat List */}
@@ -200,33 +183,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f7fa',
-  },
-  tabContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
-  },
-  tabButton: {
-    flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 15,
-    gap: 7,
-  },
-  tabIcon: {
-    marginRight: 8,
-  },
-  activeTabButton: {
-    borderBottomWidth: 2,
-    borderBottomColor: '#3717ce',
-  },
-  tabButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
   },
   chatList: {
     flexGrow: 1,
@@ -298,6 +254,43 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    paddingVertical: 15,
+    backgroundColor: '#ffffff',
+    borderBottomColor: '#ddd',
+    borderBottomWidth: 1,
+  },
+  tabButton: {
+      paddingVertical: 10,
+      paddingHorizontal: 20,
+      marginHorizontal: 10,
+      borderRadius: 20,
+      backgroundColor: '#e1e1e1',
+  },
+  activeTab: {
+      backgroundColor: '#3717ce',
+  },
+  tabText: {
+      color: '#fff',
+      fontWeight: 'bold',
+  },
+  notificationBadge: {
+      position: 'absolute',
+      top: -5,
+      right: -10,
+      backgroundColor: 'red',
+      borderRadius: 10,
+      minWidth: 20,
+      minHeight: 20,
+      justifyContent: 'center',
+      alignItems: 'center',
+  },
+  notificationBadgeText: {
+      color: 'white',
+      fontSize: 12,
   },
 });
 
