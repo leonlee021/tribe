@@ -9,6 +9,7 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 import { UserContext } from '../contexts/UserContext';
 import { fetchNotifications, clearTaskNotifications } from '../services/notificationService';
 import { NotificationContext } from '../contexts/NotificationContext';
+
 const ChatScreen = () => {
   const { user } = useContext(UserContext);
   const [chats, setChats] = useState([]);

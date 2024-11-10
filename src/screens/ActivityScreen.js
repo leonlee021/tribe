@@ -121,9 +121,9 @@ const ActivityScreen = () => {
       
 
       const fetchTasks = async () => {
-        const response = await authService.fetchWithSilentAuth(async () => {
-          return api.get('/tasks');
-        });
+        const response = await authService.fetchWithSilentAuth(async (api) => {
+            return api.get('/tasks');
+          });
       
         if (response && response.data) {
           // Fetch review status for each completed task

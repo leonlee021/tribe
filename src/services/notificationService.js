@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from './api';
 import messaging from '@react-native-firebase/messaging';
 import { Platform } from 'react-native';
-import { fetchWithSilentAuth } from './authService';
+import authService from './authService'; 
 
 // Add token management with debouncing
 let tokenUpdatePromise = null;
@@ -11,12 +11,12 @@ let lastTokenUpdate = 0;
 const TOKEN_UPDATE_COOLDOWN = 5000; // 5 seconds cooldown
 
 export const fetchNotifications = async () => {
-  const response = await fetchWithSilentAuth(() => 
+  const response = await authService.fetchWithSilentAuth(api => 
     api.get('/notifications/user-notifications')
   );
   
   // If response is null (auth error) or no notifications, return empty array
-  return (response?.notifications || []);
+  return (response?.data?.notifications || []);  // Added .data to handle the response structure
 };
 
 export const clearTaskNotifications = async (message, taskId) => {
