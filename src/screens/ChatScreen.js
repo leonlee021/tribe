@@ -9,10 +9,6 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 import { UserContext } from '../contexts/UserContext';
 import { fetchNotifications, clearTaskNotifications } from '../services/notificationService';
 import { NotificationContext } from '../contexts/NotificationContext';
-import Badge from '../components/Badge.js';
-import { fetchWithSilentAuth, cacheData } from '../services/authService'
-
-
 const ChatScreen = () => {
   const { user } = useContext(UserContext);
   const [chats, setChats] = useState([]);

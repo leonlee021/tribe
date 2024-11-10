@@ -14,7 +14,7 @@ import * as ImagePicker from 'expo-image-picker';
 import ProfileTaskPost from '../components/ProfileTaskPost';
 import { UserContext } from '../contexts/UserContext'; // Import UserContext
 import NotificationDebug from '../components/NotificationDebug';
-import { setTestTokenExpiry, fetchWithSilentAuth, cacheData } from '../services/authService'
+import authService from '../services/authService'
 
 const ProfileScreen = ({ navigation }) => {
   const { user, setUser, fetchUserProfile } = useContext(UserContext); // Consume UserContext to get the current user
@@ -76,9 +76,9 @@ const ProfileScreen = ({ navigation }) => {
     if (!userIdParam) return;
   
     const [requestedResponse, taskerResponse, cancellationsResponse] = await Promise.all([
-      fetchWithSilentAuth(() => api.get(`/tasks/user/${userIdParam}`)),
-      fetchWithSilentAuth(() => api.get(`/tasks/tasker/${userIdParam}`)),
-      fetchWithSilentAuth(() => api.get(`/cancellations/tasker/${userIdParam}`))
+      authService.fetchWithSilentAuth(() => api.get(`/tasks/user/${userIdParam}`)),
+      authService.fetchWithSilentAuth(() => api.get(`/tasks/tasker/${userIdParam}`)),
+      authService.fetchWithSilentAuth(() => api.get(`/cancellations/tasker/${userIdParam}`))
     ]);
   
     // Extract tasks with null checks
@@ -116,7 +116,7 @@ const ProfileScreen = ({ navigation }) => {
 
   // Fetch hidden tasks
   const fetchHiddenTasks = async () => {
-    const response = await fetchWithSilentAuth(() => api.get('/tasks/hidden'));
+    const response = await authService.fetchWithSilentAuth(() => api.get('/tasks/hidden'));
     // Properly handle null response and data structure
     if (response?.data?.tasks) {
         setHiddenTasks(response.data.tasks);

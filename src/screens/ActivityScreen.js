@@ -10,7 +10,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../services/api';
 import { NotificationContext } from '../contexts/NotificationContext';
 import { clearTaskNotifications } from '../services/notificationService';
-import { fetchWithSilentAuth } from '../services/authService';
+import authService from '../services/authService';
 
 const ActivityScreen = () => {
     const navigation = useNavigation();
@@ -121,7 +121,7 @@ const ActivityScreen = () => {
       
 
       const fetchTasks = async () => {
-        const response = await fetchWithSilentAuth(async () => {
+        const response = await authService.fetchWithSilentAuth(async () => {
           return api.get('/tasks');
         });
       

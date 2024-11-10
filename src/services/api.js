@@ -1,13 +1,5 @@
-import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { API_BASE_URL } from '@env';
-import { setupAuthInterceptor } from './authService';
+import authService from './authService';
 
-const api = axios.create({
-    baseURL: API_BASE_URL,
-    timeout: 30000,
-});
+// Export the configured axios instance
+export default authService.getApi();
 
-setupAuthInterceptor(api);
-
-export default api;
