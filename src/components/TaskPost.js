@@ -25,7 +25,7 @@ const TaskPost = ({
   }
 
   const formattedDate = timeSince(task.createdAt);
-  const profilePhotoUrl = task.user && task.user.profilePhotoUrl ? task.user.profilePhotoUrl : null;
+  const profilePhotoUrl = task.requester && task.requester.profilePhotoUrl ? task.requester.profilePhotoUrl : null;
 
   const renderTaskPhotos = () => {
     const photos = task.photos || [];
@@ -93,17 +93,17 @@ const TaskPost = ({
 
       {/* User Information */}
       <View style={styles.profileContainer}>
-        <TouchableOpacity onPress={() => onViewProfile(task.user?.id)}>
+        <TouchableOpacity onPress={() => onViewProfile(task.requester?.id)}>
           {profilePhotoUrl ? (
             <Image source={{ uri: profilePhotoUrl }} style={styles.profilePhoto} />
           ) : (
             <Icon name="user-circle" size={50} color="#e1e1e1" />
           )}
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => onViewProfile(task.user?.id)} style={styles.usernameContainer}>
+        <TouchableOpacity onPress={() => onViewProfile(task.requester?.id)} style={styles.usernameContainer}>
           <Text style={styles.username}>
-            {task.user 
-              ? `${task.user.firstName} ${task.user.lastName}` 
+            {task.requester 
+              ? `${task.requester.firstName} ${task.requester.lastName}` 
               : 'Anonymous'}
           </Text>
         </TouchableOpacity>

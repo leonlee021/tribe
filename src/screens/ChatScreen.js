@@ -16,7 +16,6 @@ import { fetchWithSilentAuth, cacheData } from '../services/authService'
 const ChatScreen = () => {
   const { user } = useContext(UserContext);
   const [chats, setChats] = useState([]);
-  const [isGuest, setIsGuest] = useState(false);
   const [selectedTab, setSelectedTab] = useState('requester'); // 'requester' or 'tasker'
   const navigation = useNavigation();
   const route = useRoute();
@@ -33,7 +32,6 @@ const ChatScreen = () => {
   useEffect(() => {
     const fetchData = async () => {
       if (!user) {
-        setIsGuest(true);
         return;
       }
 
@@ -41,14 +39,11 @@ const ChatScreen = () => {
         const response = await api.get('/chats');
         if (response?.data) {
           setChats(response.data);
-          setIsGuest(false); // Ensure we stay in logged-in view
         }
       } catch (error) {
-        // Only log non-auth errors, don't set guest mode on auth errors
         if (!error.response || (error.response.status !== 401 && error.response.status !== 403)) {
           console.error('Error fetching chats:', error);
         }
-        // Don't set isGuest to true here
       }
     };
 
@@ -136,21 +131,6 @@ const ChatScreen = () => {
       </TouchableOpacity>
     );
   };
-
-  if (isGuest) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.emptyContainer}>
-          <Icon name="comments" size={100} color="#ccc" />
-          <Text style={styles.emptyText}>Please log in to view your chats.</Text>
-          <TouchableOpacity style={styles.loginButton} onPress={() => navigation.navigate('LoginScreen')}>
-            <Text style={styles.loginButtonText}>Log In</Text>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
   // Ensure user is defined before filtering
   const requesterChats = user ? chats.filter(chat => chat.requesterId === user.id) : [];
   const taskerChats = user ? chats.filter(chat => chat.taskerId === user.id) : [];

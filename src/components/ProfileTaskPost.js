@@ -30,7 +30,7 @@ const renderStars = (rating) => {
 const ProfileTaskPost = ({ task, loggedInUserId, onHide, onUnhide, isOwnProfile, isHiddenTask, profileUser }) => {
   const isTaskOwner = loggedInUserId ? String(task.userId) === String(loggedInUserId) : false;
   const formattedDate = timeSince(task.createdAt);
-  const profilePhotoUrl = task.user && task.user.profilePhotoUrl ? task.user.profilePhotoUrl : null;
+  const profilePhotoUrl = task.requester && task.requester.profilePhotoUrl ? task.requester.profilePhotoUrl : null;
 
   let reviews = [];
 
