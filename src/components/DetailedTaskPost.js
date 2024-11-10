@@ -27,7 +27,12 @@ const DetailedTaskPost = ({
   const [review, setReview] = useState('');  // For the review text input
   const [rating, setRating] = useState(0);   // For the rating out of 5 stars
   const [isPhotoModalVisible, setIsPhotoModalVisible] = useState(false);
+  const [localHasSubmittedReview, setLocalHasSubmittedReview] = useState(hasSubmittedReview);
   const navigation = useNavigation();
+
+  useEffect(() => {
+    setLocalHasSubmittedReview(hasSubmittedReview);
+  }, [hasSubmittedReview]);
 
     // This is where we determine if the task was cancelled for the tasker
     const isTaskCancelled = task.cancellations && task.cancellations.length > 0;
@@ -120,7 +125,10 @@ const DetailedTaskPost = ({
             );
 
             Alert.alert('Review Submitted', 'Your review has been successfully submitted.');
+            setLocalHasSubmittedReview(true); // Update local state
             onLeaveReview(task.id); 
+            setReview(''); // Clear the review input
+            setRating(0); // Reset the rating
         } catch (error) {
             console.error('Error submitting review:', error);
             Alert.alert('Error', 'Failed to submit review.');
@@ -194,28 +202,34 @@ const renderTaskActions = () => {
       )}
 
       {/* Leave a Review Button: Show if task.status is 'completed' and review has not been submitted */}
-      {task.status === 'completed' && !hasSubmittedReview && (
+      {task.status === 'completed' && (
         <View style={styles.reviewContainer}>
-          <Text style={styles.reviewTitle}>Leave a Review</Text>
-          <TextInput
-            style={styles.reviewInput}
-            placeholder="Write your review..."
-            value={review}
-            onChangeText={setReview}
-            multiline
-            placeholderTextColor="#aaa"
-          />
-          <View style={styles.ratingContainer}>
-            <Text style={styles.ratingLabel}>Rate out of 5: </Text>
-            {[1, 2, 3, 4, 5].map((star) => (
-              <TouchableOpacity key={star} onPress={() => setRating(star)}>
-                <Text style={styles.star}>{star <= rating ? '★' : '☆'}</Text>
+          {hasSubmittedReview ? (
+            <Text style={styles.reviewSubmittedText}>Your review has been submitted</Text>
+          ) : (
+            <>
+              <Text style={styles.reviewTitle}>Leave a Review</Text>
+              <TextInput
+                style={styles.reviewInput}
+                placeholder="Write your review..."
+                value={review}
+                onChangeText={setReview}
+                multiline
+                placeholderTextColor="#aaa"
+              />
+              <View style={styles.ratingContainer}>
+                <Text style={styles.ratingLabel}>Rate out of 5: </Text>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <TouchableOpacity key={star} onPress={() => setRating(star)}>
+                    <Text style={styles.star}>{star <= rating ? '★' : '☆'}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              <TouchableOpacity style={styles.submitButton} onPress={submitReview}>
+                <Text style={styles.submitButtonText}>Submit Review</Text>
               </TouchableOpacity>
-            ))}
-          </View>
-          <TouchableOpacity style={styles.submitButton} onPress={submitReview}>
-            <Text style={styles.submitButtonText}>Submit Review</Text>
-          </TouchableOpacity>
+            </>
+          )}
         </View>
       )}
     </View>
@@ -657,6 +671,13 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '600',
     fontSize: 16,
+  },
+  reviewSubmittedText: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    padding: 10,
+    fontStyle: 'italic'
   },
   cancelledLabel: {
     color: '#ff4d4d',

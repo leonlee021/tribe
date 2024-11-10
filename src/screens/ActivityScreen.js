@@ -43,6 +43,21 @@ const ActivityScreen = () => {
         fetchData(); // Call the async function to fetch data
     }, []); // No need for taskId here
 
+    // Add this near your other useEffect hooks
+    useFocusEffect(
+        React.useCallback(() => {
+        const refreshData = async () => {
+            try {
+            await fetchTasks();
+            } catch (error) {
+            console.error('Error refreshing tasks:', error);
+            }
+        };
+        
+        refreshData();
+        }, [])
+    );
+
     // Function to get the notification count for a specific task
     const getTaskNotificationCount = (taskId) => {
         const offerNotifications = notifications.filter(
@@ -111,21 +126,31 @@ const ActivityScreen = () => {
         });
       
         if (response && response.data) {
-          // Sort tasks so those with notifications appear at the top
-          const tasksWithNotifications = response.data.map(task => {
-            const { offerNotifications, acceptedNotifications, cancelledNotifications, completedNotifications } = 
-              getTaskNotificationCount(task.id);
-            return {
-              ...task,
-              hasNotification: offerNotifications > 0 || 
-                              acceptedNotifications > 0 || 
-                              cancelledNotifications > 0 || 
-                              completedNotifications > 0
-            };
-          }).sort((a, b) => b.hasNotification - a.hasNotification);
+          // Fetch review status for each completed task
+          const tasksWithReviewStatus = await Promise.all(
+            response.data.map(async task => {
+              const { offerNotifications, acceptedNotifications, cancelledNotifications, completedNotifications } = 
+                getTaskNotificationCount(task.id);
+              
+              let hasSubmittedReview = false;
+              if (task.status === 'completed') {
+                hasSubmittedReview = await fetchHasSubmittedReview(task.id);
+              }
+              
+              return {
+                ...task,
+                hasSubmittedReview,
+                hasNotification: offerNotifications > 0 || 
+                                acceptedNotifications > 0 || 
+                                cancelledNotifications > 0 || 
+                                completedNotifications > 0
+              };
+            })
+          );
       
-          console.log('Tasks fetched in ActivityScreen:', tasksWithNotifications);
-          setTasks(tasksWithNotifications);
+          const sortedTasks = tasksWithReviewStatus.sort((a, b) => b.hasNotification - a.hasNotification);
+          console.log('Tasks fetched in ActivityScreen:', sortedTasks);
+          setTasks(sortedTasks);
         } else {
           setTasks([]);
         }
@@ -218,11 +243,19 @@ const ActivityScreen = () => {
     };
 
     const handleLeaveReview = async (taskId) => {
-        setTasks((prevTasks) =>
-            prevTasks.map((task) =>
-                task.id === taskId ? { ...task, hasSubmittedReview: true } : task
-            )
-        )
+        try {
+            // Update the local state immediately for better UX
+            setTasks((prevTasks) =>
+                prevTasks.map((task) =>
+                    task.id === taskId ? { ...task, hasSubmittedReview: true } : task
+                )
+            );
+            
+            // Refresh the tasks to ensure we have the latest data
+            await fetchTasks();
+        } catch (error) {
+            console.error('Error updating review status:', error);
+        }
     };
 
     const handleViewProfile = (userId) => {
