@@ -202,9 +202,9 @@ const CustomScreen = () => {
                 return (
                     <View style={styles.formContainer}>
                         <Text style={styles.label}>Location</Text>
-                        <TouchableOpacity style={styles.smallButton} onPress={() => setLocation('Current Location')}>
+                        {/* <TouchableOpacity style={styles.smallButton} onPress={() => setLocation('Current Location')}>
                             <Text style={styles.smallButtonText}>Use Current Location</Text>
-                        </TouchableOpacity>
+                        </TouchableOpacity> */}
                         <TextInput
                             style={styles.textInput}
                             placeholder="Enter location"
@@ -460,6 +460,13 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: '#fff',
         marginLeft: 10,
+    },
+    smallButtonText: {
+        fontSize: 14,
+        color: '#007AFF', // iOS blue, use '#2196F3' for Android material blue
+        fontWeight: '500', // Medium weight for better readability
+        paddingVertical: 4,
+        letterSpacing: 0.25, // Subtle letter spacing for better legibility
     },
     addButton: {
         flexDirection: 'row',

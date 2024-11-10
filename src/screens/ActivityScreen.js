@@ -106,7 +106,9 @@ const ActivityScreen = () => {
     const fetchHasSubmittedReview = async (taskId) => {
         try {
           const token = await AsyncStorage.getItem('userToken');
-          if (!token) throw new Error('User token not found');
+          if (!token) {
+            return false; // Silently return false if no token (user not logged in)
+        }
       
           const headers = token ? { Authorization: `Bearer ${token}` } : {};
       

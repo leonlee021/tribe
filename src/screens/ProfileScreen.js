@@ -402,9 +402,9 @@ const ProfileScreen = ({ navigation }) => {
               <View style={styles.emptyState}>
                 <FontAwesome name="tasks" size={50} color="#e1e1e1" />
                 <Text style={styles.emptyStateText}>No tasks posted yet.</Text>
-                <TouchableOpacity style={styles.postTaskButton} onPress={() => navigation.navigate('CreateTask')}>
+                {/* <TouchableOpacity style={styles.postTaskButton} onPress={() => navigation.navigate('CreateTask')}>
                   <Text style={styles.postTaskButtonText}>Post a Task</Text>
-                </TouchableOpacity>
+                </TouchableOpacity> */}
               </View>
             </View>
           </ScrollView>
