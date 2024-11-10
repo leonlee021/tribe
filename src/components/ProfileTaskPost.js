@@ -1,6 +1,8 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, Image, StyleSheet, Modal, ScrollView, Dimensions } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
+
+const { width, height } = Dimensions.get('window');
 
 const renderStars = (rating) => {
     const stars = [];
@@ -31,16 +33,28 @@ const ProfileTaskPost = ({ task, loggedInUserId, onHide, onUnhide, isOwnProfile,
   const isTaskOwner = loggedInUserId ? String(task.userId) === String(loggedInUserId) : false;
   const formattedDate = timeSince(task.createdAt);
   const profilePhotoUrl = task.requester && task.requester.profilePhotoUrl ? task.requester.profilePhotoUrl : null;
-
-  // let reviews = [];
-
-  // if (task.activeChat && task.activeChat.reviews && task.activeChat.reviews.length > 0) {
-  //   reviews = task.activeChat.reviews;
-  // }
+  const [isPhotoModalVisible, setIsPhotoModalVisible] = useState(false);
 
   const relevantReviews = task.activeChat?.reviews?.filter(review => 
     String(review.reviewedUserId) === String(profileUser?.id)
   ) || [];
+
+  const renderTaskPhotos = () => {
+    const photos = task.photos || [];
+    if (photos.length > 0) {
+      return (
+        <TouchableOpacity onPress={() => setIsPhotoModalVisible(true)} style={styles.photoContainer}>
+          <Image source={{ uri: photos[0] }} style={styles.coverPhoto} />
+          {photos.length > 1 && (
+            <View style={styles.morePhotosOverlay}>
+              <Text style={styles.morePhotosText}>+{photos.length - 1}</Text>
+            </View>
+          )}
+        </TouchableOpacity>
+      );
+    }
+    return null;
+  };
 
   return (
     <View style={styles.cardContainer}>
@@ -49,6 +63,9 @@ const ProfileTaskPost = ({ task, loggedInUserId, onHide, onUnhide, isOwnProfile,
 
       {/* Task Description */}
       <Text style={styles.taskDescription}>{task.postContent}</Text>
+
+      {/* Task Photos */}
+      {renderTaskPhotos()}
 
       {/* Task Details */}
       <View style={styles.taskDetailsContainer}>
@@ -106,6 +123,38 @@ const ProfileTaskPost = ({ task, loggedInUserId, onHide, onUnhide, isOwnProfile,
             <Text style={styles.hideButtonText}>Archive</Text>
           </TouchableOpacity>
         )
+      )}
+
+      {/* Photo Modal */}
+      {isPhotoModalVisible && (
+        <Modal
+          visible={isPhotoModalVisible}
+          transparent={true}
+          onRequestClose={() => setIsPhotoModalVisible(false)}
+        >
+          <View style={styles.modalContainer}>
+            <TouchableOpacity
+              onPress={() => setIsPhotoModalVisible(false)}
+              style={styles.closeModalButton}
+            >
+              <Icon name="times" size={30} color="#fff" />
+            </TouchableOpacity>
+            <ScrollView
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+            >
+              {task.photos && task.photos.map((photo, index) => (
+                <View key={index} style={styles.imageWrapper}>
+                  <Image
+                    source={{ uri: photo }}
+                    style={styles.fullScreenPhoto}
+                  />
+                </View>
+              ))}
+            </ScrollView>
+          </View>
+        </Modal>
       )}
     </View>
   );
@@ -231,5 +280,51 @@ const styles = StyleSheet.create({
     color: '#fff',
     marginLeft: 8,
     fontWeight: '600',
+  },
+  photoContainer: {
+    position: 'relative',
+    width: '100%',
+    height: 200,
+    marginVertical: 12,
+  },
+  coverPhoto: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 12,
+  },
+  morePhotosOverlay: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  morePhotosText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'black',
+  },
+  closeModalButton: {
+    position: 'absolute',
+    top: 30,
+    right: 20,
+    zIndex: 1,
+  },
+  imageWrapper: {
+    width: width,
+    height: height,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fullScreenPhoto: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'contain',
   },
 });
