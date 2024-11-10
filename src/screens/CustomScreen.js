@@ -280,7 +280,7 @@ const CustomScreen = () => {
                     <View style={styles.navigationContainer}>
                         {currentStep > 1 && (
                             <TouchableOpacity style={styles.backButton} onPress={handlePreviousStep}>
-                                <Icon name="arrow-left" size={18} color="#1DA1F2" />
+                                <Icon name="arrow-left" size={18} color="#3717ce" />
                                 <Text style={styles.navigationButtonTextBack}>Back</Text>
                             </TouchableOpacity>
                         )}
@@ -331,7 +331,7 @@ const styles = StyleSheet.create({
     headerTitle: {
         fontSize: 28,
         fontWeight: 'bold',
-        color: '#1DA1F2',
+        color: '#3717ce',
     },
     pageTrackerContainer: {
         flexDirection: 'row',
@@ -346,7 +346,7 @@ const styles = StyleSheet.create({
         marginHorizontal: 5,
     },
     filledCircle: {
-        backgroundColor: '#1DA1F2',
+        backgroundColor: '#3717ce',
     },
     formContainer: {
         marginBottom: 30,
@@ -390,13 +390,13 @@ const styles = StyleSheet.create({
         marginTop: 20,
     },
     nextButton: {
-        backgroundColor: '#1DA1F2',
+        backgroundColor: '#3717ce',
         flexDirection: 'row',
         alignItems: 'center',
         paddingVertical: 12,
         paddingHorizontal: 25,
         borderRadius: 25,
-        shadowColor: '#1DA1F2',
+        shadowColor: '#3717ce',
         shadowOpacity: 0.5,
         shadowOffset: { width: 0, height: 4 },
         shadowRadius: 6,
@@ -416,21 +416,21 @@ const styles = StyleSheet.create({
         paddingVertical: 12,
         paddingHorizontal: 25,
         borderRadius: 25,
-        borderColor: '#1DA1F2',
+        borderColor: '#3717ce',
         borderWidth: 1,
     },
     navigationButtonTextBack: {
         fontSize: 16,
         fontWeight: 'bold',
-        color: '#1DA1F2',
+        color: '#3717ce',
         marginLeft: 10,
     },
     submitButton: {
-        backgroundColor: '#1DA1F2',
+        backgroundColor: '#3717ce',
         paddingVertical: 12,
         paddingHorizontal: 25,
         borderRadius: 25,
-        shadowColor: '#1DA1F2',
+        shadowColor: '#3717ce',
         shadowOpacity: 0.5,
         shadowOffset: { width: 0, height: 4 },
         shadowRadius: 6,
@@ -472,7 +472,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#1DA1F2',
+        backgroundColor: '#3717ce',
         paddingVertical: 12,
         paddingHorizontal: 25,
         borderRadius: 25,

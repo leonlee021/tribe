@@ -355,13 +355,13 @@ const renderTaskActions = () => {
       {/* Task Details */}
       <View style={styles.taskDetailsContainer}>
         <View style={styles.taskDetail}>
-          <Icon name="map-marker" size={18} color="#1DA1F2" />
+          <Icon name="map-marker" size={18} color="#3717ce" />
           <Text style={styles.taskDetailText} numberOfLines={1} ellipsizeMode="tail">
             {task.location || 'No location set'}
           </Text>
         </View>
         <View style={styles.taskDetail}>
-          <Icon name="clock-o" size={18} color="#1DA1F2" />
+          <Icon name="clock-o" size={18} color="#3717ce" />
           <Text style={styles.taskDetailText}>{formattedDate || 'Unknown time'}</Text>
         </View>
       </View>
@@ -537,7 +537,7 @@ const styles = StyleSheet.create({
   taskPrice: {
     fontSize: 25,
     fontWeight: '700',
-    color: '#1DA1F2',
+    color: '#3717ce',
     marginTop: 4,
   },
   expandButton: {
@@ -545,7 +545,7 @@ const styles = StyleSheet.create({
   },
   
   viewOffersButton: {
-    backgroundColor: '#1DA1F2', // Blue for "View Offers"
+    backgroundColor: '#3717ce', // Blue for "View Offers"
     position: 'relative', // Required for absolute positioning of the badge
   },
   notificationBadgeButton: {
@@ -648,7 +648,7 @@ const styles = StyleSheet.create({
   offerPrice: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1DA1F2',
+    color: '#3717ce',
     marginBottom: 8,
   },
   offerMessage: {
@@ -662,7 +662,7 @@ const styles = StyleSheet.create({
     color: '#4CAF50',
   },
   acceptOfferButton: {
-    backgroundColor: '#1DA1F2',
+    backgroundColor: '#3717ce',
     paddingVertical: 10,
     borderRadius: 8,
     alignItems: 'center',
@@ -732,12 +732,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   offeredTaskBorder: {
-    borderColor: '#1DA1F2', // Green for active task
+    borderColor: '#3717ce', // Green for active task
     borderWidth: 2,
     borderRadius: 12,
   },
   activeTaskBorder: {
-    borderColor: '#28a745', // Green for active task
+    borderColor: '#3717ce', // Green for active task
     borderWidth: 2,
     borderRadius: 12,
   },
@@ -759,7 +759,7 @@ const styles = StyleSheet.create({
   },
   offeredStatusText: {
     fontSize: 20,
-    color: '#1DA1F2',
+    color: '#3717ce',
     fontWeight: 'bold',
   },
   cancelledStatusText: {
@@ -769,7 +769,7 @@ const styles = StyleSheet.create({
   },
   activeStatusText: {
     fontSize: 20,
-    color: '#28a745',
+    color: '#3717ce',
     fontWeight: 'bold',
   },
   
@@ -800,10 +800,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   completeButton: {
-    backgroundColor: '#4CAF50', // Green for "Mark as Completed"
+    backgroundColor: '#3717ce', // Green for "Mark as Completed"
   },
   cancelButton: {
-    backgroundColor: '#FF6347', // Red for "Cancel Task"
+    backgroundColor: '#ff4d4d', // Red for "Cancel Task"
   },
   reviewButton: {
     backgroundColor: '#4CAF50', // Yellow for "Leave a Review"

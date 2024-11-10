@@ -121,13 +121,13 @@ const TaskPost = ({
       <View style={styles.taskDetailsContainer}>
         <View style={styles.otherDetailsContainer}>
           <View style={styles.taskDetail}>
-            <Icon name="map-marker" size={18} color="#1DA1F2" />
+            <Icon name="map-marker" size={18} color="#3717ce" />
             <Text style={styles.taskDetailText} numberOfLines={1} ellipsizeMode="tail">
               {task.location || 'No location set'}
             </Text>
           </View>
           <View style={styles.taskDetail}>
-            <Icon name="clock-o" size={18} color="#1DA1F2" />
+            <Icon name="clock-o" size={18} color="#3717ce" />
             <Text style={styles.taskDetailText}>{formattedDate || 'Unknown time'}</Text>
           </View>
         </View>
@@ -232,7 +232,7 @@ const styles = StyleSheet.create({
   taskPrice: {
     fontSize: 25,
     fontWeight: '700',
-    color: '#1DA1F2',
+    color: '#3717ce',
     marginTop: 4,
   },
   taskName: {
@@ -279,7 +279,7 @@ const styles = StyleSheet.create({
     color: '#777',
   },
   acceptButton: {
-    backgroundColor: '#1DA1F2',
+    backgroundColor: '#3717ce',
     paddingVertical: 14,
     borderRadius: 8,
     alignItems: 'center',
@@ -317,7 +317,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   completedText: {
-    color: '#1DA1F2',
+    color: '#3717ce',
     fontSize: 14,
     marginTop: 16,
     textAlign: 'center',

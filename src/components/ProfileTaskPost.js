@@ -270,7 +270,7 @@ const styles = StyleSheet.create({
   hideButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FF6347',
+    backgroundColor: '#ff4d4d',
     padding: 10,
     borderRadius: 8,
     marginTop: 12,

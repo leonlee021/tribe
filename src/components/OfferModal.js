@@ -81,7 +81,7 @@ const styles = StyleSheet.create({
     modalTitle: {
       fontSize: 20,
       fontWeight: 'bold',
-      color: '#1DA1F2',
+      color: '#3717ce',
       marginBottom: 15,
       textAlign: 'center',
     },
@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
       marginTop: 20,
     },
     submitButton: {
-      backgroundColor: '#1DA1F2',
+      backgroundColor: '#3717ce',
       paddingVertical: 12,
       paddingHorizontal: 20,
       borderRadius: 8,
