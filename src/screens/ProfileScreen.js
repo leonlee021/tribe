@@ -85,10 +85,17 @@ const ProfileScreen = ({ navigation }) => {
     const requestedTasks = requestedResponse?.data?.tasks || [];
     const allTaskerTasks = taskerResponse?.data?.tasks || [];
     const taskerCancellations = cancellationsResponse?.data?.cancellations || [];
+
+    const sortedRequestedTasks = requestedTasks
+      .filter(task => task.status === 'completed')
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    const completedTasks = allTaskerTasks
+      .filter(task => task.status === 'completed')
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
   
     // Set tasks requested and tasks completed
-    setTasksRequested(requestedTasks.filter(task => task.status === 'completed'));
-    const completedTasks = allTaskerTasks.filter(task => task.status === 'completed');
+    setTasksRequested(sortedRequestedTasks);
     setTasksCompleted(completedTasks);
   
     // Set tasksAssigned
@@ -156,7 +163,7 @@ const ProfileScreen = ({ navigation }) => {
     }
     setRefreshing(false);
   };
-  
+
   const selectProfilePhoto = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {

@@ -32,11 +32,15 @@ const ProfileTaskPost = ({ task, loggedInUserId, onHide, onUnhide, isOwnProfile,
   const formattedDate = timeSince(task.createdAt);
   const profilePhotoUrl = task.requester && task.requester.profilePhotoUrl ? task.requester.profilePhotoUrl : null;
 
-  let reviews = [];
+  // let reviews = [];
 
-  if (task.activeChat && task.activeChat.reviews && task.activeChat.reviews.length > 0) {
-    reviews = task.activeChat.reviews;
-  }
+  // if (task.activeChat && task.activeChat.reviews && task.activeChat.reviews.length > 0) {
+  //   reviews = task.activeChat.reviews;
+  // }
+
+  const relevantReviews = task.activeChat?.reviews?.filter(review => 
+    String(review.reviewedUserId) === String(profileUser?.id)
+  ) || [];
 
   return (
     <View style={styles.cardContainer}>
@@ -65,10 +69,10 @@ const ProfileTaskPost = ({ task, loggedInUserId, onHide, onUnhide, isOwnProfile,
       </View>
 
       {/* Display Review if available */}
-      {reviews.length > 0 ? (
+      {relevantReviews.length > 0 ? (
         <View style={styles.reviewContainer}>
           <Text style={styles.reviewTitle}>Review for {profileUser ? `${profileUser.firstName} ${profileUser.lastName}` : 'User'}</Text>
-          {reviews.map((review, index) => (
+          {relevantReviews.map((review, index) => (
             <View key={index} style={styles.singleReviewContainer}>
               <View style={styles.reviewHeader}>
                 <Text style={styles.reviewText}>{review.review}</Text>
