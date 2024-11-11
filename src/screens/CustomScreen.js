@@ -25,7 +25,7 @@ const CustomScreen = () => {
     const [taskName, setTaskName] = useState('');
     const [postContent, setPostContent] = useState('');
     const [location, setLocation] = useState('');
-    const [price, setPrice] = useState('5');
+    const [price, setPrice] = useState('');
     const [currentStep, setCurrentStep] = useState(1);
     const [images, setImages] = useState([]); // State to store selected images
     const [isModalVisible, setIsModalVisible] = useState(false);
@@ -155,7 +155,7 @@ const CustomScreen = () => {
         setTaskName('');
         setPostContent('');
         setLocation('');
-        setPrice('5');
+        setPrice('');
         setImages([]);
         setCurrentStep(1);
     };
@@ -169,6 +169,7 @@ const CustomScreen = () => {
                         <TextInput
                             style={styles.textInput}
                             placeholder="Enter task title"
+                            placeholderTextColor="#999"
                             value={taskName}
                             onChangeText={setTaskName}
                             maxLength={50}
@@ -177,6 +178,7 @@ const CustomScreen = () => {
                         <TextInput
                             style={[styles.textInput, styles.textArea]}
                             placeholder="Include task details"
+                            placeholderTextColor="#999"
                             value={postContent}
                             onChangeText={setPostContent}
                             multiline={true}
@@ -192,6 +194,7 @@ const CustomScreen = () => {
                         <TextInput
                             style={styles.textInput}
                             placeholder="Enter price (minimum $5)"
+                            placeholderTextColor="#999"
                             keyboardType="numeric"
                             value={price}
                             onChangeText={setPrice}
@@ -208,6 +211,7 @@ const CustomScreen = () => {
                         <TextInput
                             style={styles.textInput}
                             placeholder="Enter location"
+                            placeholderTextColor="#999"
                             value={location}
                             onChangeText={setLocation}
                             maxLength={35}

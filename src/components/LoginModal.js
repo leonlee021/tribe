@@ -377,7 +377,7 @@ const LoginModal = ({ visible, onClose, onLoginSuccess }) => {
                                         </TouchableOpacity>
                                         
                                         {/* Google Sign-In Button */}
-                                        <TouchableOpacity
+                                        {/* <TouchableOpacity
                                             style={styles.googleButton}
                                             disabled={!request}
                                             onPress={() => {
@@ -385,7 +385,7 @@ const LoginModal = ({ visible, onClose, onLoginSuccess }) => {
                                             }}
                                         >
                                             <Text style={styles.googleButtonText}>Sign in with Google</Text>
-                                        </TouchableOpacity>
+                                        </TouchableOpacity> */}
                                     </>
                                 )}
                                 {isSignUp && (

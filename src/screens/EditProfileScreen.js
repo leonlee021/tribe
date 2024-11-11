@@ -88,18 +88,21 @@ const EditProfileScreen = ({ navigation }) => {
       <TextInput
         style={styles.input}
         placeholder="First Name"
+        placeholderTextColor="#999"
         value={firstName}
         onChangeText={setFirstName}
       />
       <TextInput
         style={styles.input}
         placeholder="Last Name"
+        placeholderTextColor="#999"
         value={lastName}
         onChangeText={setLastName}
       />
       <TextInput
         style={styles.input}
         placeholder="About"
+        placeholderTextColor="#999"
         value={about}
         onChangeText={setAbout}
         multiline
@@ -107,18 +110,21 @@ const EditProfileScreen = ({ navigation }) => {
       <TextInput
         style={styles.input}
         placeholder="Location"
+        placeholderTextColor="#999"
         value={location}
         onChangeText={setLocation}
       />
       <TextInput
         style={styles.input}
         placeholder="Experience"
+        placeholderTextColor="#999"
         value={experience}
         onChangeText={setExperience}
       />
       <TextInput
         style={styles.input}
         placeholder="Age"
+        placeholderTextColor="#999"
         value={age}
         onChangeText={setAge}
         keyboardType="numeric"
@@ -126,6 +132,7 @@ const EditProfileScreen = ({ navigation }) => {
       <TextInput
         style={styles.input}
         placeholder="Gender"
+        placeholderTextColor="#999"
         value={gender}
         onChangeText={setGender}
       />

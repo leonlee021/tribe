@@ -5,7 +5,8 @@ import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity, 
   Alert, RefreshControl, ActivityIndicator, SafeAreaView
 } from 'react-native';
-import Icon from 'react-native-vector-icons/FontAwesome';
+//import Icon from 'react-native-vector-icons/FontAwesome';
+import Icon from 'react-native-vector-icons/Ionicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../services/api';
 import ProfileTaskPost from '../components/ProfileTaskPost';
@@ -89,11 +90,11 @@ const HiddenTasksScreen = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       {/* Back Button */}
       <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-        <Icon name="arrow-left" size={24} color="#1DA1F2" />
+        <Icon name="arrow-back" size={24} color="#000" />
       </TouchableOpacity>
   
       {loading ? (
-        <ActivityIndicator size="large" color="#1DA1F2" />
+        <ActivityIndicator size="large" color="#3717ce" />
       ) : (
         <ScrollView
           contentContainerStyle={styles.scrollContainer}
@@ -101,7 +102,7 @@ const HiddenTasksScreen = ({ navigation }) => {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              colors={['#1DA1F2']}
+              colors={['#3717ce']}
             />
           }
         >
@@ -143,7 +144,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#1DA1F2',
+    color: '#3717ce',
     marginBottom: 15,
     textAlign: 'center',
   },

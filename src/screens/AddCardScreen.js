@@ -158,6 +158,7 @@ const AddCardScreen = () => {
             <Icon name="card-outline" size={50} color="#1DA1F2" style={styles.noCardIcon} />
             <Text style={styles.noCardText}>No card saved</Text>
             <Text style={styles.instructionsText}>Please add a credit/debit card to enable payments!</Text>
+            <Text style={styles.disclaimerText}>Please note: Credit card payments are currently unavailable in the beta version. This feature will be enabled soon! </Text>
             <CardForm
               style={styles.cardForm}
               onFormComplete={(details) => {
@@ -278,6 +279,12 @@ const styles = StyleSheet.create({
   instructionsText: {
     fontSize: 16,
     color: '#555',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  disclaimerText: {
+    fontSize: 16,
+    color: 'red',
     marginBottom: 15,
     textAlign: 'center',
   },
