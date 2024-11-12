@@ -16,15 +16,20 @@
       }
     },
     "preview": {
+      "extends": "production",
+      "developmentClient": true,
       "distribution": "internal",
-      "ios": {
-        "resourceClass": "m-medium"
+      "env": {
+        "API_BASE_URL": "$(API_BASE_URL)"
       }
     },
     "production": {
       "autoIncrement": true,
       "ios": {
         "resourceClass": "m-medium"
+      },
+      "env": {
+        "API_BASE_URL": "$(API_BASE_URL)"
       }
     }
   },

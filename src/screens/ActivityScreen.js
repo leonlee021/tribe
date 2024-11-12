@@ -266,6 +266,7 @@ const ActivityScreen = () => {
 
     // Function to handle accepting an offer
     const handleAcceptOffer = async (offerId) => {
+        console.log('Accepting offer:', offerId);
         try {
             const token = await AsyncStorage.getItem('userToken');
             if (!token) {
@@ -274,14 +275,15 @@ const ActivityScreen = () => {
             }
 
             const response = await api.post(
-                `/offers/accept/${offerId}`, // Include offerId here
-                {}, // No need to send offerId in the body
+                `/offers/accept/${offerId}`, 
+                {}, 
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
                 }
             );
+            console.log('Offer acceptance response:', response.data);
 
             if (response.status === 200) {
                 Alert.alert('Offer Accepted', 'You have accepted the offer.');

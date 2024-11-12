@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../services/api';
 import { UserContext } from '../contexts/UserContext'; 
@@ -13,6 +13,9 @@ const EditProfileScreen = ({ navigation }) => {
   const [experience, setExperience] = useState('');
   const [age, setAge] = useState('');
   const [gender, setGender] = useState('');
+
+  const MAX_ABOUT_LENGTH = 500; // Maximum characters for about section
+  const MAX_LINES = 5; // Maximum number of lines allowed
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -41,6 +44,21 @@ const EditProfileScreen = ({ navigation }) => {
     fetchUserProfile();
   }, []);
 
+  const handleAboutChange = (text) => {
+    // Count the number of newlines
+    const lineCount = (text.match(/\n/g) || []).length + 1;
+    
+    // If we exceed the maximum number of lines, remove the last newline
+    if (lineCount > MAX_LINES) {
+      text = text.replace(/\n$/, '');
+    }
+    
+    // Limit the total length
+    if (text.length <= MAX_ABOUT_LENGTH) {
+      setAbout(text);
+    }
+  };
+
   const handleSave = async () => {
     try {
       const token = await AsyncStorage.getItem('userToken');
@@ -49,7 +67,7 @@ const EditProfileScreen = ({ navigation }) => {
       const updatedData = {
         firstName,
         lastName,
-        about,
+        about: about.trim(),
         location,
         experience,
         age: parseInt(age, 10),
@@ -83,6 +101,7 @@ const EditProfileScreen = ({ navigation }) => {
   };
 
   return (
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
     <View style={styles.container}>
       <Text style={styles.heading}>Edit Profile</Text>
       <TextInput
@@ -104,7 +123,9 @@ const EditProfileScreen = ({ navigation }) => {
         placeholder="About"
         placeholderTextColor="#999"
         value={about}
-        onChangeText={setAbout}
+        onChangeText={handleAboutChange}
+        maxLength={MAX_ABOUT_LENGTH}
+        maxHeight={Platform.OS === 'ios' ? 150 : undefined}
         multiline
       />
       <TextInput
@@ -140,6 +161,7 @@ const EditProfileScreen = ({ navigation }) => {
         <Text style={styles.saveButtonText}>Save</Text>
       </TouchableOpacity>
     </View>
+    </TouchableWithoutFeedback>
   );
 };
 
