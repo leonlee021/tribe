@@ -239,8 +239,8 @@ const styles = StyleSheet.create({
         paddingTop: 10,
     },
     mImage: {
-        width: 70,  // Adjust the width as necessary for your image
-        height: 70, // Adjust the height as necessary for your image
+        width: 90,  // Adjust the width as necessary for your image
+        height: 90, // Adjust the height as necessary for your image
         resizeMode: 'contain',  // Maintain aspect ratio of the image
       },
     // headerContainer: {

@@ -75,10 +75,10 @@ const ProfileTaskPost = ({ task, loggedInUserId, onHide, onUnhide, isOwnProfile,
             {task.location || 'No location set'}
           </Text>
         </View>
-        <View style={styles.taskDetail}>
+        {/* <View style={styles.taskDetail}>
           <Icon name="dollar" size={16} color="#777" />
           <Text style={styles.taskDetailText}>${task.price}</Text>
-        </View>
+        </View> */}
         <View style={styles.taskDetail}>
           <Icon name="clock-o" size={16} color="#777" />
           <Text style={styles.taskDetailText}>{formattedDate}</Text>
