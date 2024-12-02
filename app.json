@@ -15,7 +15,11 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.leonlee021.mutually",
-      "googleServicesFile": "./GoogleService-Info.plist"
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Allow Mutually to use your location to find nearby taskers.",
+        "NSLocationAlwaysUsageDescription": "Allow Mutually to use your location to find nearby taskers."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -40,6 +44,12 @@
           "ios": {
             "useFrameworks": "static"
           }
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow Mutually to use your location."
         }
       ]
     ],

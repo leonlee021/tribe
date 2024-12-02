@@ -6,6 +6,8 @@ import {
 import Icon from 'react-native-vector-icons/FontAwesome';
 import OfferModal from '../components/OfferModal';
 import { useNavigation } from '@react-navigation/native';
+import MapComponent from './MapComponent';
+
 
 const TaskPost = ({
   task,
@@ -199,6 +201,13 @@ const TaskPost = ({
           </View>
         </Modal>
       )}
+
+      {/* Map integration */}
+      <MapComponent 
+        location={task.location}
+        title={`Location for: ${task.title}`}
+        height={200}
+      />
     </View>
   );
 };

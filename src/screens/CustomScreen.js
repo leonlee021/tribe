@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import 'react-native-get-random-values'; 
 import {
     View,
     Text,
@@ -15,11 +16,15 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { useNavigation } from '@react-navigation/native';
+import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import LoginPromptModal from '../components/LoginModal';
 import api from '../services/api'; // API import for task posting
 import * as ImageManipulator from 'expo-image-manipulator';
+import * as Location from 'expo-location';
+import MapComponent from '../components/MapComponent';
+import { GOOGLE_PLACES_API_KEY } from "@env";
 
 const CustomScreen = () => {
     const [taskName, setTaskName] = useState('');
@@ -31,6 +36,10 @@ const CustomScreen = () => {
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const navigation = useNavigation();
+    const [selectedLocation, setSelectedLocation] = useState(null);
+    const [currentLocationCoords, setCurrentLocationCoords] = useState(null);
+    const [locationText, setLocationText] = useState('');
+    const [showLocationSearch, setShowLocationSearch] = useState(false);
 
     useEffect(() => {
         const checkAuthStatus = async () => {
@@ -39,6 +48,84 @@ const CustomScreen = () => {
         };
         checkAuthStatus();
     }, []);
+
+    const LocationSearchComponent = () => (
+        <View style={styles.locationSearchOverlay}>
+            <View style={styles.locationSearchHeader}>
+                <TouchableOpacity 
+                    style={styles.backButton} 
+                    onPress={() => setShowLocationSearch(false)}
+                >
+                    <Icon name="arrow-left" size={20} color="#000" />
+                </TouchableOpacity>
+                <Text style={styles.locationSearchTitle}>Search Location</Text>
+            </View>
+            <GooglePlacesAutocomplete
+                placeholder="Search for location"
+                onPress={(data, details = null) => {
+                    const locationString = data.description;
+                    setLocationText(locationString);
+                    setLocation(locationString);
+                    if (details) {
+                        setSelectedLocation({
+                            latitude: details.geometry.location.lat,
+                            longitude: details.geometry.location.lng,
+                            address: locationString
+                        });
+                    }
+                    setShowLocationSearch(false);
+                }}
+                query={{
+                    key: GOOGLE_PLACES_API_KEY,
+                    language: 'en',
+                }}
+                styles={{
+                    container: styles.googlePlacesContainer,
+                    textInput: styles.googlePlacesInput,
+                    listView: styles.googlePlacesList,
+                    row: styles.googlePlacesRow,
+                }}
+                fetchDetails={true}
+                enablePoweredByContainer={false}
+                textInputProps={{
+                    placeholderTextColor: '#999',
+                }}
+            />
+        </View>
+    );
+
+    // Add this function to get current location
+    const getCurrentLocation = async () => {
+        try {
+            const { status } = await Location.requestForegroundPermissionsAsync();
+            if (status !== 'granted') {
+                Alert.alert('Permission denied', 'Please allow location access to use this feature.');
+                return;
+            }
+
+            const position = await Location.getCurrentPositionAsync({});
+            const { latitude, longitude } = position.coords;
+
+            // Get address from coordinates
+            const [address] = await Location.reverseGeocodeAsync({
+                latitude,
+                longitude
+            });
+
+            const locationString = `${address.street || ''} ${address.city || ''}, ${address.region || ''} ${address.postalCode || ''}`;
+            setLocationText(locationString.trim());
+            setLocation(locationString.trim());
+            setSelectedLocation({
+                latitude,
+                longitude,
+                address: locationString
+            });
+            setCurrentLocationCoords({ latitude, longitude });
+        } catch (error) {
+            Alert.alert('Error', 'Could not fetch current location.');
+            console.error(error);
+        }
+    };
 
     const handleNextStep = () => {
         if (currentStep === 1 && (!taskName || !postContent)) {
@@ -205,18 +292,35 @@ const CustomScreen = () => {
                 return (
                     <View style={styles.formContainer}>
                         <Text style={styles.label}>Location</Text>
-                        {/* <TouchableOpacity style={styles.smallButton} onPress={() => setLocation('Current Location')}>
-                            <Text style={styles.smallButtonText}>Use Current Location</Text>
-                        </TouchableOpacity> */}
-                        <TextInput
-                            style={styles.textInput}
-                            placeholder="Enter location"
-                            placeholderTextColor="#999"
-                            value={location}
-                            onChangeText={setLocation}
-                            maxLength={35}
-                        />
-                        <Text style={styles.charCount}>{35 - location.length}/35 characters remaining</Text>
+                        <TouchableOpacity 
+                            style={styles.currentLocationButton} 
+                            onPress={getCurrentLocation}
+                        >
+                            <Icon name="location-arrow" size={16} color="#fff" />
+                            <Text style={styles.currentLocationButtonText}>
+                                Use Current Location
+                            </Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity 
+                            style={styles.locationInput}
+                            onPress={() => setShowLocationSearch(true)}
+                        >
+                            <Text style={locationText ? styles.locationText : styles.locationPlaceholder}>
+                                {locationText || "Search for location"}
+                            </Text>
+                            <Icon name="search" size={16} color="#999" />
+                        </TouchableOpacity>
+
+                        {selectedLocation && (
+                            <View style={styles.mapContainer}>
+                                <MapComponent
+                                    location={selectedLocation}
+                                    height={200}
+                                    title="Task Location"
+                                />
+                            </View>
+                        )}
                     </View>
                 );
             case 4:
@@ -268,52 +372,56 @@ const CustomScreen = () => {
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
                 keyboardVerticalOffset={Platform.select({ ios: 60, android: 80 })}
             >
-                <ScrollView contentContainerStyle={styles.contentContainer}>
-                    {/* Header */}
-                    <View style={styles.header}>
-                        <Text style={styles.headerTitle}>Request A Task</Text>
-                    </View>
+                {!showLocationSearch ? (
+                    <ScrollView contentContainerStyle={styles.contentContainer}>
+                        {/* Header */}
+                        <View style={styles.header}>
+                            <Text style={styles.headerTitle}>Request A Task</Text>
+                        </View>
 
-                    {/* Page Tracker */}
-                    {renderPageTracker()}
+                        {/* Page Tracker */}
+                        {renderPageTracker()}
 
-                    {/* Step Content */}
-                    {renderStepContent()}
+                        {/* Step Content */}
+                        {renderStepContent()}
 
-                    {/* Navigation Buttons */}
-                    <View style={styles.navigationContainer}>
-                        {currentStep > 1 && (
-                            <TouchableOpacity style={styles.backButton} onPress={handlePreviousStep}>
-                                <Icon name="arrow-left" size={18} color="#3717ce" />
-                                <Text style={styles.navigationButtonTextBack}>Back</Text>
-                            </TouchableOpacity>
-                        )}
-                        {currentStep < 4 && (
-                            <TouchableOpacity style={styles.nextButton} onPress={handleNextStep}>
-                                <Text style={styles.navigationButtonText}>Next</Text>
-                                <Icon name="arrow-right" size={18} color="#fff" style={styles.arrowSpacing} />
-                            </TouchableOpacity>
-                        )}
-                        {currentStep === 4 && (
-                            <TouchableOpacity style={styles.submitButton} onPress={handlePost}>
-                                <Text style={styles.submitButtonText}>Submit Task</Text>
-                            </TouchableOpacity>
-                        )}
-                    </View>
+                        {/* Navigation Buttons */}
+                        <View style={styles.navigationContainer}>
+                            {currentStep > 1 && (
+                                <TouchableOpacity style={styles.backButton} onPress={handlePreviousStep}>
+                                    <Icon name="arrow-left" size={18} color="#3717ce" />
+                                    <Text style={styles.navigationButtonTextBack}>Back</Text>
+                                </TouchableOpacity>
+                            )}
+                            {currentStep < 4 && (
+                                <TouchableOpacity style={styles.nextButton} onPress={handleNextStep}>
+                                    <Text style={styles.navigationButtonText}>Next</Text>
+                                    <Icon name="arrow-right" size={18} color="#fff" style={styles.arrowSpacing} />
+                                </TouchableOpacity>
+                            )}
+                            {currentStep === 4 && (
+                                <TouchableOpacity style={styles.submitButton} onPress={handlePost}>
+                                    <Text style={styles.submitButtonText}>Submit Task</Text>
+                                </TouchableOpacity>
+                            )}
+                        </View>
 
-                    {/* Exit Button */}
-                    <TouchableOpacity style={styles.exitButton} onPress={handleExitProcess}>
-                        <Icon name="close" size={18} color="#fff" />
-                        <Text style={styles.exitButtonText}>Exit</Text>
-                    </TouchableOpacity>
+                        {/* Exit Button */}
+                        <TouchableOpacity style={styles.exitButton} onPress={handleExitProcess}>
+                            <Icon name="close" size={18} color="#fff" />
+                            <Text style={styles.exitButtonText}>Exit</Text>
+                        </TouchableOpacity>
 
-                    {/* Modal for login */}
-                    <LoginPromptModal
-                        visible={isModalVisible}
-                        onClose={() => setIsModalVisible(false)}
-                        onLoginSuccess={handlePost}
-                    />
-                </ScrollView>
+                        {/* Modal for login */}
+                        <LoginPromptModal
+                            visible={isModalVisible}
+                            onClose={() => setIsModalVisible(false)}
+                            onLoginSuccess={handlePost}
+                        />
+                    </ScrollView>
+                ) : (
+                    <LocationSearchComponent />
+                )}
             </KeyboardAvoidingView>
         </TouchableWithoutFeedback>
     );
@@ -508,5 +616,82 @@ const styles = StyleSheet.create({
         right: -10,
         backgroundColor: 'white',
         borderRadius: 12,
+    },
+    currentLocationButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#3717ce',
+        padding: 10,
+        borderRadius: 8,
+        marginBottom: 10,
+    },
+    currentLocationButtonText: {
+        color: '#fff',
+        marginLeft: 8,
+        fontSize: 14,
+    },
+    locationSearchOverlay: {
+        flex: 1,
+        backgroundColor: 'white',
+    },
+    locationSearchHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: '#eee',
+    },
+    locationSearchTitle: {
+        fontSize: 18,
+        fontWeight: '600',
+        marginLeft: 16,
+    },
+    googlePlacesContainer: {
+        flex: 1,
+        paddingHorizontal: 16,
+    },
+    googlePlacesInput: {
+        height: 44,
+        borderColor: '#ddd',
+        borderWidth: 1,
+        borderRadius: 8,
+        paddingHorizontal: 10,
+        fontSize: 16,
+        backgroundColor: 'white',
+    },
+    googlePlacesList: {
+        backgroundColor: 'white',
+    },
+    googlePlacesRow: {
+        padding: 13,
+        height: 'auto',
+        minHeight: 44,
+    },
+    locationInput: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        height: 44,
+        borderColor: '#ddd',
+        borderWidth: 1,
+        borderRadius: 8,
+        paddingHorizontal: 10,
+        backgroundColor: 'white',
+        marginBottom: 10,
+    },
+    locationText: {
+        fontSize: 16,
+        color: '#000',
+        flex: 1,
+    },
+    locationPlaceholder: {
+        fontSize: 16,
+        color: '#999',
+        flex: 1,
+    },
+    mapContainer: {
+        marginTop: 10,
+        borderRadius: 8,
+        overflow: 'hidden',
     },
 });

@@ -23,6 +23,7 @@ import ChatDetailScreen from './src/screens/ChatDetailScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import AddCardScreen from './src/screens/AddCardScreen';
 import HiddenTasksScreen from './src/screens/HiddenTasksScreen';
+import MapScreen from './src/screens/MapScreen';
 
 const firebaseConfig = {
   apiKey: "AIzaSyA3p9i_O2419jzmMwEs2HhuEygoYcF0u4g",
@@ -148,6 +149,11 @@ export default function App() {
               options = {{
               headerShown: false,
               }}
+          />
+          <Stack.Screen 
+            name='MapScreen' 
+            component={MapScreen} 
+            options={{ headerShown: false }}
           />
         </Stack.Navigator>
         <TabBar 
