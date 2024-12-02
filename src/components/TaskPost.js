@@ -20,6 +20,7 @@ const TaskPost = ({
   const [isPhotoModalVisible, setIsPhotoModalVisible] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const navigation = useNavigation();
+  const [showMap, setShowMap] = useState(false); 
 
   // Skip rendering if the task belongs to the logged-in user
   if (String(task.userId) === String(loggedInUserId)) {
@@ -28,25 +29,6 @@ const TaskPost = ({
 
   const formattedDate = timeSince(task.createdAt);
   const profilePhotoUrl = task.requester && task.requester.profilePhotoUrl ? task.requester.profilePhotoUrl : null;
-
-  const renderMap = () => {
-    if (!task.latitude || !task.longitude) {
-        return null;
-    }
-
-    const locationData = {
-        latitude: parseFloat(task.latitude),
-        longitude: parseFloat(task.longitude),
-    };
-
-    return (
-        <MapComponent 
-            location={locationData}
-            title={task.taskName || 'Task Location'}
-            height={200}
-        />
-    );
-};
 
   const renderTaskPhotos = () => {
     const photos = task.photos || [];
@@ -141,12 +123,48 @@ const TaskPost = ({
       {/* Task Details */}
       <View style={styles.taskDetailsContainer}>
         <View style={styles.otherDetailsContainer}>
-          <View style={styles.taskDetail}>
-            <Icon name="map-marker" size={18} color="#3717ce" />
-            <Text style={styles.taskDetailText} numberOfLines={1} ellipsizeMode="tail">
-              {task.location || 'No location set'}
-            </Text>
+          <View style={styles.locationSection}>
+            <View style={styles.locationInfo}>
+              <Icon name="map-marker" size={18} color="#3717ce" />
+              <Text style={styles.taskDetailText} numberOfLines={1} ellipsizeMode="tail">
+                {task.location || 'No location set'}
+              </Text>
+            </View>
+            
+            {task.latitude && task.longitude && (
+              <>
+                {showMap ? (
+                  <MapComponent 
+                    location={{
+                      latitude: parseFloat(task.latitude),
+                      longitude: parseFloat(task.longitude),
+                    }}
+                    title={task.taskName || 'Task Location'}
+                    height={200}
+                  />
+                ) : (
+                  <TouchableOpacity 
+                    onPress={() => setShowMap(true)} 
+                    style={styles.viewMapButton}
+                  >
+                    <Icon name="map" size={14} color="#3717ce" />
+                    <Text style={styles.viewMapText}>View Map</Text>
+                  </TouchableOpacity>
+                )}
+              </>
+            )}
+            
+            {showMap && (
+              <TouchableOpacity 
+                onPress={() => setShowMap(false)}
+                style={styles.closeMapButton}
+              >
+                <Icon name="times" size={16} color="#3717ce" />
+                <Text style={styles.closeMapText}>Close Map</Text>
+              </TouchableOpacity>
+            )}
           </View>
+          
           <View style={styles.taskDetail}>
             <Icon name="clock-o" size={18} color="#3717ce" />
             <Text style={styles.taskDetailText}>{formattedDate || 'Unknown time'}</Text>
@@ -221,9 +239,6 @@ const TaskPost = ({
         </Modal>
       )}
 
-      {/* Map integration */}
-      {renderMap()}
-      
     </View>
   );
 };
@@ -291,7 +306,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   taskDetailsContainer: {
-    marginBottom: 12,
+    marginVertical: 12,
   },
   taskDetail: {
     flexDirection: 'row',
@@ -302,6 +317,21 @@ const styles = StyleSheet.create({
     marginLeft: 6,
     fontSize: 14,
     color: '#777',
+    flex: 1,
+  },
+  locationSection: {
+    marginBottom: 12,
+    alignItems: 'center',
+  },
+  locationContainer: {
+    marginBottom: 8,
+    alignItems: 'center',
+  },
+  locationInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+    width: '100%',
   },
   acceptButton: {
     backgroundColor: '#3717ce',
@@ -393,5 +423,73 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  viewMapButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f0f0f0',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+    marginTop: 4,
+  },
+  viewMapText: {
+    color: '#3717ce',
+    fontSize: 15,
+    fontWeight: '600',
+    marginLeft: 6,
+  },
+  mapContainer: {
+    marginTop: 10,
+    borderRadius: 8,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#eee',
+    backgroundColor: '#fff',
+  },
+  mapHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 12,           // Increased padding
+    backgroundColor: '#f0f0f0', // Matching the button background
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  mapHeaderContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    
+  },
+  mapHeaderText: {
+    fontSize: 15,          // Matching the button text size
+    fontWeight: '600',
+    color: '#3717ce',      // Matching the button text color
+    marginLeft: 8,
+  },
+  closeMapButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f0f0f0',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  taskDetail: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+    flexWrap: 'wrap',
+  },
+  mapButtonContainer: {
+    alignItems: 'center',
+    paddingVertical: 10,
+    backgroundColor: '#fff',
+  },
+  closeMapText: {
+    color: '#3717ce',
+    fontSize: 15,
+    fontWeight: '600',
+    marginLeft: 8,
   },
 });

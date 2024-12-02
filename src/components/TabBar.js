@@ -18,12 +18,12 @@ const data = [
         screen: "ActivityScreen",
         icon: "pulse-outline",
     },
-    {
-        id: "5",
-        title: "Map",
-        screen: "MapScreen",
-        icon: "person-outline",
-    },
+    // {
+    //     id: "5",
+    //     title: "Map",
+    //     screen: "MapScreen",
+    //     icon: "person-outline",
+    // },
     {
         id: "3",
         title: "Chat",

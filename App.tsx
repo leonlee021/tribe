@@ -150,11 +150,11 @@ export default function App() {
               headerShown: false,
               }}
           />
-          <Stack.Screen 
+          {/* <Stack.Screen 
             name='MapScreen' 
             component={MapScreen} 
             options={{ headerShown: false }}
-          />
+          /> */}
         </Stack.Navigator>
         <TabBar 
           currentScreen="HomeScreen"

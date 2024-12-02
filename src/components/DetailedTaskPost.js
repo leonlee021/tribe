@@ -7,6 +7,7 @@ import { useNavigation } from '@react-navigation/native';
 import OfferModal from '../components/OfferModal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../services/api';
+import MapComponent from './MapComponent';
 
 const DetailedTaskPost = ({
   task,
@@ -29,6 +30,7 @@ const DetailedTaskPost = ({
   const [isPhotoModalVisible, setIsPhotoModalVisible] = useState(false);
   const [localHasSubmittedReview, setLocalHasSubmittedReview] = useState(hasSubmittedReview);
   const navigation = useNavigation();
+  const [showMap, setShowMap] = useState(false); 
 
   useEffect(() => {
     setLocalHasSubmittedReview(hasSubmittedReview);
@@ -354,12 +356,48 @@ const renderTaskActions = () => {
   
       {/* Task Details */}
       <View style={styles.taskDetailsContainer}>
-        <View style={styles.taskDetail}>
-          <Icon name="map-marker" size={18} color="#3717ce" />
-          <Text style={styles.taskDetailText} numberOfLines={1} ellipsizeMode="tail">
-            {task.location || 'No location set'}
-          </Text>
+        <View style={styles.locationSection}>
+          <View style={styles.locationInfo}>
+            <Icon name="map-marker" size={18} color="#3717ce" />
+            <Text style={styles.taskDetailText} numberOfLines={1} ellipsizeMode="tail">
+              {task.location || 'No location set'}
+            </Text>
+          </View>
+          
+          {task.latitude && task.longitude && (
+            <>
+              {showMap ? (
+                <MapComponent 
+                  location={{
+                    latitude: parseFloat(task.latitude),
+                    longitude: parseFloat(task.longitude),
+                  }}
+                  title={task.taskName || 'Task Location'}
+                  height={200}
+                />
+              ) : (
+                <TouchableOpacity 
+                  onPress={() => setShowMap(true)} 
+                  style={styles.viewMapButton}
+                >
+                  <Icon name="map" size={14} color="#3717ce" />
+                  <Text style={styles.viewMapText}>View Map</Text>
+                </TouchableOpacity>
+              )}
+            </>
+          )}
+          
+          {showMap && (
+            <TouchableOpacity 
+              onPress={() => setShowMap(false)}
+              style={styles.closeMapButton}
+            >
+              <Icon name="times" size={16} color="#3717ce" />
+              <Text style={styles.closeMapText}>Close Map</Text>
+            </TouchableOpacity>
+          )}
         </View>
+        
         <View style={styles.taskDetail}>
           <Icon name="clock-o" size={18} color="#3717ce" />
           <Text style={styles.taskDetailText}>{formattedDate || 'Unknown time'}</Text>
@@ -935,7 +973,59 @@ taskerContainer: {
     height: '100%',
     resizeMode: 'contain',
   },
-  
-  
+  locationSection: {
+    marginBottom: 12,
+    alignItems: 'center',
+  },
+  locationInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+    width: '100%',
+  },
+  viewMapButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f0f0f0',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+    marginTop: 4,
+  },
+  viewMapText: {
+    color: '#3717ce',
+    fontSize: 15,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  closeMapButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f0f0f0',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+    marginTop: 8,
+  },
+  closeMapText: {
+    color: '#3717ce',
+    fontSize: 15,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  taskDetailsContainer: {
+    marginVertical: 12,
+  },
+  taskDetail: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  taskDetailText: {
+    marginLeft: 6,
+    fontSize: 14,
+    color: '#777',
+    flex: 1,
+  },
   
 });
