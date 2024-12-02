@@ -243,12 +243,6 @@ const styles = StyleSheet.create({
         height: 90, // Adjust the height as necessary for your image
         resizeMode: 'contain',  // Maintain aspect ratio of the image
       },
-    // headerContainer: {
-    //     flexDirection: 'row',  // Arrange the image and text horizontally
-    //     alignItems: 'center',  // Align vertically in the center
-    //     //justifyContent: 'center',  // Center the content horizontally
-    //     marginTop: 20,
-    //   },
     mutuallyText: {
         fontSize: 28,
         fontWeight: 'bold',
@@ -257,20 +251,28 @@ const styles = StyleSheet.create({
     },
     requestTaskButton: {
         backgroundColor: '#3717ce',
-        paddingVertical: 18,
-        paddingHorizontal: 70,
-        borderRadius: 30,
+        paddingVertical: 26,
+        paddingHorizontal: 80,
+        borderRadius: 35,
         alignSelf: 'center',
         marginTop: 15,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 5 },
-        shadowOpacity: 0.15,
+        // shadowColor: '#000',
+        // shadowOffset: { width: 0, height: 5 },
+        shadowColor: '#3717ce',    // Changed to match button color for a glowing effect
+        shadowOffset: { 
+            width: 0, 
+            height: 5             // Increased offset
+        },
+        shadowOpacity: 0.5,
         shadowRadius: 8,
         elevation: 8,
+        transform: [              // Added transform to lift the button
+            { translateY: -5 }    // Lifts the button up slightly
+        ],
     },
     requestTaskButtonText: {
         color: '#fff',
-        fontSize: 20,
+        fontSize: 24,
         fontWeight: 'bold',
         textAlign: 'center',
     },

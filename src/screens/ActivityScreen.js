@@ -413,7 +413,7 @@ const ActivityScreen = () => {
                         />
                     );
                 }}
-                ListEmptyComponent={<Text style={styles.emptyText}>No tasks as a tasker.</Text>}
+                ListEmptyComponent={<Text style={styles.emptyText}>Tasks that you are assigned to as the tasker will show here!</Text>}
             />
         );
     };
@@ -447,7 +447,7 @@ const ActivityScreen = () => {
                         />
                     );
                 }}
-                ListEmptyComponent={<Text style={styles.emptyText}>No tasks as a requester.</Text>}
+                ListEmptyComponent={<Text style={styles.emptyText}>Your requested tasks will show here!</Text>}
             />
         );
     };
@@ -590,9 +590,10 @@ const styles = StyleSheet.create({
         paddingVertical: 10,
     },
     emptyText: {
-        color: '#6c757d',
+        color: '#777',
         textAlign: 'center',
-        marginTop: 20,
+        marginTop: 50,
+        fontSize: 16,
     },
     modalOverlay: {
         flex: 1,

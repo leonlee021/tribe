@@ -169,7 +169,7 @@ const ChatScreen = () => {
         contentContainerStyle={styles.chatList}
         ListEmptyComponent={
           <Text style={styles.emptyText}>
-            {selectedTab === 'requester' ? 'No chats as requester.' : 'No chats as tasker.'}
+            {selectedTab === 'requester' ? 'No chats yet as requester!' : 'No chats yets as tasker!'}
           </Text>
         }
       />
