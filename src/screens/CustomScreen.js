@@ -203,6 +203,8 @@ const CustomScreen = () => {
             formData.append('taskName', taskName);
             formData.append('postContent', postContent);
             formData.append('location', location);
+            formData.append('latitude', selectedLocation.latitude.toString());
+            formData.append('longitude', selectedLocation.longitude.toString());
             formData.append('price', price);
     
             // Append images to FormData

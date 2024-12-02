@@ -29,6 +29,25 @@ const TaskPost = ({
   const formattedDate = timeSince(task.createdAt);
   const profilePhotoUrl = task.requester && task.requester.profilePhotoUrl ? task.requester.profilePhotoUrl : null;
 
+  const renderMap = () => {
+    if (!task.latitude || !task.longitude) {
+        return null;
+    }
+
+    const locationData = {
+        latitude: parseFloat(task.latitude),
+        longitude: parseFloat(task.longitude),
+    };
+
+    return (
+        <MapComponent 
+            location={locationData}
+            title={task.taskName || 'Task Location'}
+            height={200}
+        />
+    );
+};
+
   const renderTaskPhotos = () => {
     const photos = task.photos || [];
     if (photos.length > 0) {
@@ -203,11 +222,8 @@ const TaskPost = ({
       )}
 
       {/* Map integration */}
-      <MapComponent 
-        location={task.location}
-        title={`Location for: ${task.title}`}
-        height={200}
-      />
+      {renderMap()}
+      
     </View>
   );
 };
