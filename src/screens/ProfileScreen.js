@@ -14,7 +14,7 @@ import * as ImagePicker from 'expo-image-picker';
 import ProfileTaskPost from '../components/ProfileTaskPost';
 import { UserContext } from '../contexts/UserContext'; // Import UserContext
 import NotificationDebug from '../components/NotificationDebug';
-import authService from '../services/authService'
+import authService from '../services/authService';
 
 const ProfileScreen = ({ navigation }) => {
   const { user, setUser, fetchUserProfile } = useContext(UserContext); // Consume UserContext to get the current user

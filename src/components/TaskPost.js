@@ -124,12 +124,6 @@ const TaskPost = ({
       <View style={styles.taskDetailsContainer}>
         <View style={styles.otherDetailsContainer}>
           <View style={styles.locationSection}>
-            <View style={styles.locationInfo}>
-              <Icon name="map-marker" size={18} color="#3717ce" />
-              <Text style={styles.taskDetailText} numberOfLines={1} ellipsizeMode="tail">
-                {task.location || 'No location set'}
-              </Text>
-            </View>
             
             {task.latitude && task.longitude && (
               <>
@@ -163,6 +157,12 @@ const TaskPost = ({
                 <Text style={styles.closeMapText}>Close Map</Text>
               </TouchableOpacity>
             )}
+          </View>
+          <View style={styles.locationInfo}>
+              <Icon name="map-marker" size={18} color="#3717ce" />
+              <Text style={styles.taskDetailText} numberOfLines={1} ellipsizeMode="tail">
+                {task.location || 'No location set'}
+              </Text>
           </View>
           
           <View style={styles.taskDetail}>

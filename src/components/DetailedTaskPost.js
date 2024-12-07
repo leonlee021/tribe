@@ -356,14 +356,7 @@ const renderTaskActions = () => {
   
       {/* Task Details */}
       <View style={styles.taskDetailsContainer}>
-        <View style={styles.locationSection}>
-          <View style={styles.locationInfo}>
-            <Icon name="map-marker" size={18} color="#3717ce" />
-            <Text style={styles.taskDetailText} numberOfLines={1} ellipsizeMode="tail">
-              {task.location || 'No location set'}
-            </Text>
-          </View>
-          
+        <View style={styles.locationSection}>          
           {task.latitude && task.longitude && (
             <>
               {showMap ? (
@@ -396,6 +389,13 @@ const renderTaskActions = () => {
               <Text style={styles.closeMapText}>Close Map</Text>
             </TouchableOpacity>
           )}
+        </View>
+
+        <View style={styles.locationInfo}>
+              <Icon name="map-marker" size={18} color="#3717ce" />
+              <Text style={styles.taskDetailText} numberOfLines={1} ellipsizeMode="tail">
+                {task.location || 'No location set'}
+              </Text>
         </View>
         
         <View style={styles.taskDetail}>

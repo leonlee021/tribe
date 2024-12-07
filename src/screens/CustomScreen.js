@@ -10,9 +10,11 @@ import {
     Image,
     ScrollView,
     KeyboardAvoidingView,
+    SafeAreaView,
     Platform,
     Keyboard,
     TouchableWithoutFeedback,
+    ActivityIndicator,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { useNavigation } from '@react-navigation/native';
@@ -40,6 +42,9 @@ const CustomScreen = () => {
     const [currentLocationCoords, setCurrentLocationCoords] = useState(null);
     const [locationText, setLocationText] = useState('');
     const [showLocationSearch, setShowLocationSearch] = useState(false);
+    const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+
+    const googlePlacesRef = React.useRef(null);
 
     useEffect(() => {
         const checkAuthStatus = async () => {
@@ -50,56 +55,60 @@ const CustomScreen = () => {
     }, []);
 
     const LocationSearchComponent = () => (
-        <View style={styles.locationSearchOverlay}>
-            <View style={styles.locationSearchHeader}>
-                <TouchableOpacity 
-                    style={styles.backButton} 
-                    onPress={() => setShowLocationSearch(false)}
-                >
-                    <Icon name="arrow-left" size={20} color="#000" />
-                </TouchableOpacity>
-                <Text style={styles.locationSearchTitle}>Search Location</Text>
+        <SafeAreaView style={styles.safeArea}>
+            <View style={styles.locationSearchOverlay}>
+                <View style={styles.locationSearchHeader}>
+                    <TouchableOpacity 
+                        style={styles.backButton} 
+                        onPress={() => setShowLocationSearch(false)}
+                    >
+                        <Icon name="arrow-left" size={20} color="#000" />
+                    </TouchableOpacity>
+                    <Text style={styles.locationSearchTitle}>Search Location</Text>
+                </View>
+                <GooglePlacesAutocomplete
+                    placeholder="Search for location"
+                    onPress={(data, details = null) => {
+                        const locationString = data.description;
+                        setLocationText(locationString);
+                        setLocation(locationString);
+                        if (details) {
+                            setSelectedLocation({
+                                latitude: details.geometry.location.lat,
+                                longitude: details.geometry.location.lng,
+                                address: locationString
+                            });
+                        }
+                        setShowLocationSearch(false);
+                    }}
+                    query={{
+                        key: GOOGLE_PLACES_API_KEY,
+                        language: 'en',
+                    }}
+                    styles={{
+                        container: styles.googlePlacesContainer,
+                        textInput: styles.googlePlacesInput,
+                        listView: styles.googlePlacesList,
+                        row: styles.googlePlacesRow,
+                    }}
+                    fetchDetails={true}
+                    enablePoweredByContainer={false}
+                    textInputProps={{
+                        placeholderTextColor: '#999',
+                    }}
+                />
             </View>
-            <GooglePlacesAutocomplete
-                placeholder="Search for location"
-                onPress={(data, details = null) => {
-                    const locationString = data.description;
-                    setLocationText(locationString);
-                    setLocation(locationString);
-                    if (details) {
-                        setSelectedLocation({
-                            latitude: details.geometry.location.lat,
-                            longitude: details.geometry.location.lng,
-                            address: locationString
-                        });
-                    }
-                    setShowLocationSearch(false);
-                }}
-                query={{
-                    key: GOOGLE_PLACES_API_KEY,
-                    language: 'en',
-                }}
-                styles={{
-                    container: styles.googlePlacesContainer,
-                    textInput: styles.googlePlacesInput,
-                    listView: styles.googlePlacesList,
-                    row: styles.googlePlacesRow,
-                }}
-                fetchDetails={true}
-                enablePoweredByContainer={false}
-                textInputProps={{
-                    placeholderTextColor: '#999',
-                }}
-            />
-        </View>
+        </SafeAreaView>
     );
 
     // Add this function to get current location
     const getCurrentLocation = async () => {
+        setIsLoadingLocation(true);
         try {
             const { status } = await Location.requestForegroundPermissionsAsync();
             if (status !== 'granted') {
                 Alert.alert('Permission denied', 'Please allow location access to use this feature.');
+                setIsLoadingLocation(false);
                 return;
             }
 
@@ -109,7 +118,7 @@ const CustomScreen = () => {
             // Get address from coordinates
             const [address] = await Location.reverseGeocodeAsync({
                 latitude,
-                longitude
+                longitude,
             });
 
             const locationString = `${address.street || ''} ${address.city || ''}, ${address.region || ''} ${address.postalCode || ''}`;
@@ -121,9 +130,17 @@ const CustomScreen = () => {
                 address: locationString
             });
             setCurrentLocationCoords({ latitude, longitude });
+
+            // Update the GooglePlacesAutocomplete input
+            if (googlePlacesRef.current) {
+                googlePlacesRef.current.setAddressText(locationString);
+            }
+
         } catch (error) {
             Alert.alert('Error', 'Could not fetch current location.');
             console.error(error);
+        } finally {
+            setIsLoadingLocation(false); // Stop loading regardless of outcome
         }
     };
 
@@ -295,13 +312,23 @@ const CustomScreen = () => {
                     <View style={styles.formContainer}>
                         <Text style={styles.label}>Location</Text>
                         <TouchableOpacity 
-                            style={styles.currentLocationButton} 
+                            style={[
+                                styles.currentLocationButton,
+                                isLoadingLocation && styles.currentLocationButtonDisabled // Optional: add disabled style
+                            ]} 
                             onPress={getCurrentLocation}
+                            disabled={isLoadingLocation}
                         >
-                            <Icon name="location-arrow" size={16} color="#fff" />
-                            <Text style={styles.currentLocationButtonText}>
-                                Use Current Location
-                            </Text>
+                        {isLoadingLocation ? (
+                            <ActivityIndicator size="small" color="#fff" />
+                        ) : (
+                            <>
+                                <Icon name="location-arrow" size={16} color="#fff" />
+                                <Text style={styles.currentLocationButtonText}>
+                                    Use Current Location
+                                </Text>
+                            </>
+                        )}
                         </TouchableOpacity>
 
                         <TouchableOpacity 
@@ -317,6 +344,7 @@ const CustomScreen = () => {
                         {selectedLocation && (
                             <View style={styles.mapContainer}>
                                 <MapComponent
+                                    key={`${selectedLocation.latitude}-${selectedLocation.longitude}`} // Add this line
                                     location={selectedLocation}
                                     height={200}
                                     title="Task Location"
@@ -370,23 +398,145 @@ const CustomScreen = () => {
     return (
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <KeyboardAvoidingView
-                style={{ flex: 1 }}
+                style={{ flex: 1, position: 'relative' }}
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
                 keyboardVerticalOffset={Platform.select({ ios: 60, android: 80 })}
             >
-                {!showLocationSearch ? (
+                {currentStep === 3 ? (
+                    <View style={styles.contentContainer}>
+                        {/* Header */}
+                        <View style={styles.header}>
+                            <Text style={styles.headerTitle}>Request A Task</Text>
+                        </View>
+    
+                        {/* Page Tracker */}
+                        {renderPageTracker()}
+    
+                        <View style={[styles.formContainer, { zIndex: 1 }]}>
+                            <Text style={styles.label}>Location</Text>
+                            <TouchableOpacity 
+                                style={[
+                                    styles.currentLocationButton,
+                                    isLoadingLocation && styles.currentLocationButtonDisabled
+                                ]} 
+                                onPress={getCurrentLocation}
+                                disabled={isLoadingLocation}
+                            >
+                                {isLoadingLocation ? (
+                                    <ActivityIndicator size="small" color="#fff" />
+                                ) : (
+                                    <>
+                                        <Icon name="location-arrow" size={16} color="#fff" />
+                                        <Text style={styles.currentLocationButtonText}>
+                                            Use Current Location
+                                        </Text>
+                                    </>
+                                )}
+                            </TouchableOpacity>
+
+                            {locationText ? (
+                                <View style={styles.locationDisplay}>
+                                    <View style={styles.locationHeader}>
+                                        <Icon name="map-marker" size={16} color="#3717ce" />
+                                        <Text style={styles.locationDisplayLabel}>Selected Location</Text>
+                                    </View>
+                                    <Text style={styles.locationDisplayText}>{locationText}</Text>
+                                </View>
+                            ) : null}
+                                
+                            <View style={styles.locationSearchContainer}>
+                                <GooglePlacesAutocomplete
+                                    ref={googlePlacesRef}
+                                    placeholder="Search for location"
+                                    onPress={(data, details = null) => {
+                                        const locationString = data.description;
+                                        setLocationText(locationString);
+                                        setLocation(locationString);
+                                        if (details) {
+                                            setSelectedLocation({
+                                                latitude: details.geometry.location.lat,
+                                                longitude: details.geometry.location.lng,
+                                                address: locationString
+                                            });
+                                        }
+                                    }}
+                                    query={{
+                                        key: GOOGLE_PLACES_API_KEY,
+                                        language: 'en',
+                                    }}
+                                    styles={{
+                                        container: {
+                                            flex: 0,
+                                        },
+                                        textInput: styles.googlePlacesInput,
+                                        listView: {
+                                            backgroundColor: 'white',
+                                            borderWidth: 1,
+                                            borderColor: '#ddd',
+                                            borderRadius: 8,
+                                            position: 'absolute',
+                                            top: 44,
+                                            left: 0,
+                                            right: 0,
+                                            zIndex: 2000,
+                                            elevation: 3,
+                                        },
+                                        row: styles.googlePlacesRow,
+                                        description: {
+                                            fontSize: 14,
+                                        },
+                                    }}
+                                    fetchDetails={true}
+                                    enablePoweredByContainer={false}
+                                    textInputProps={{
+                                        placeholderTextColor: '#999',
+                                    }}
+                                />
+                            </View>
+    
+                            {selectedLocation && (
+                                <View style={styles.mapContainer}>
+                                    <MapComponent
+                                        key={`${selectedLocation.latitude}-${selectedLocation.longitude}`} // Add this line
+                                        location={selectedLocation}
+                                        height={200}
+                                        title="Task Location"
+                                    />
+                                </View>
+                            )}
+    
+                            {/* Navigation Buttons */}
+                            <View style={[styles.navigationContainer, { zIndex: 0 }]}>
+                                <TouchableOpacity style={styles.backButton} onPress={handlePreviousStep}>
+                                    <Icon name="arrow-left" size={18} color="#3717ce" />
+                                    <Text style={styles.navigationButtonTextBack}>Back</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity style={styles.nextButton} onPress={handleNextStep}>
+                                    <Text style={styles.navigationButtonText}>Next</Text>
+                                    <Icon name="arrow-right" size={18} color="#fff" style={styles.arrowSpacing} />
+                                </TouchableOpacity>
+                            </View>
+    
+                            {/* Exit Button */}
+                            <TouchableOpacity style={[styles.exitButton, { zIndex: 0 }]} onPress={handleExitProcess}>
+                                <Icon name="close" size={18} color="#fff" />
+                                <Text style={styles.exitButtonText}>Exit</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                ) : (
                     <ScrollView contentContainerStyle={styles.contentContainer}>
                         {/* Header */}
                         <View style={styles.header}>
                             <Text style={styles.headerTitle}>Request A Task</Text>
                         </View>
-
+    
                         {/* Page Tracker */}
                         {renderPageTracker()}
-
+    
                         {/* Step Content */}
                         {renderStepContent()}
-
+    
                         {/* Navigation Buttons */}
                         <View style={styles.navigationContainer}>
                             {currentStep > 1 && (
@@ -407,23 +557,21 @@ const CustomScreen = () => {
                                 </TouchableOpacity>
                             )}
                         </View>
-
+    
                         {/* Exit Button */}
                         <TouchableOpacity style={styles.exitButton} onPress={handleExitProcess}>
                             <Icon name="close" size={18} color="#fff" />
                             <Text style={styles.exitButtonText}>Exit</Text>
                         </TouchableOpacity>
-
-                        {/* Modal for login */}
-                        <LoginPromptModal
-                            visible={isModalVisible}
-                            onClose={() => setIsModalVisible(false)}
-                            onLoginSuccess={handlePost}
-                        />
                     </ScrollView>
-                ) : (
-                    <LocationSearchComponent />
                 )}
+    
+                {/* Modal for login */}
+                <LoginPromptModal
+                    visible={isModalVisible}
+                    onClose={() => setIsModalVisible(false)}
+                    onLoginSuccess={handlePost}
+                />
             </KeyboardAvoidingView>
         </TouchableWithoutFeedback>
     );
@@ -619,6 +767,10 @@ const styles = StyleSheet.create({
         backgroundColor: 'white',
         borderRadius: 12,
     },
+    safeArea: {
+        flex: 1,
+        backgroundColor: 'white',
+    },
     currentLocationButton: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -695,5 +847,58 @@ const styles = StyleSheet.create({
         marginTop: 10,
         borderRadius: 8,
         overflow: 'hidden',
+    },
+    locationSearchContainer: {
+        marginBottom: 10,
+        zIndex: 1,
+    },
+    googlePlacesInput: {
+        height: 44,
+        borderColor: '#ddd',
+        borderWidth: 1,
+        borderRadius: 8,
+        paddingHorizontal: 10,
+        fontSize: 16,
+        backgroundColor: 'white',
+    },
+    googlePlacesRow: {
+        padding: 13,
+        height: 'auto',
+        minHeight: 44,
+    },
+    currentLocationButtonDisabled: {
+        opacity: 0.7,
+    },
+    locationDisplay: {
+        backgroundColor: '#f8f9fa',
+        padding: 12,
+        borderRadius: 8,
+        marginBottom: 15,
+        borderWidth: 1,
+        borderColor: '#e1e4e8',
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 1,
+        },
+        shadowOpacity: 0.08,
+        shadowRadius: 2,
+        elevation: 1,
+    },
+    locationHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 6,
+    },
+    locationDisplayLabel: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#3717ce',
+        marginLeft: 8,
+    },
+    locationDisplayText: {
+        fontSize: 14,
+        color: '#4a4a4a',
+        lineHeight: 20,
     },
 });
