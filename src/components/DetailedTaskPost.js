@@ -4,7 +4,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { useNavigation } from '@react-navigation/native';
-import OfferModal from '../components/OfferModal';
+import OfferModal from './OfferModal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../services/api';
 import MapComponent from './MapComponent';

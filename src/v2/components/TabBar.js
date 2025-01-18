@@ -2,8 +2,8 @@ import React, { useState, useContext } from 'react';
 import { StyleSheet, Text, View, FlatList, TouchableOpacity } from 'react-native'; 
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { NotificationContext } from '../contexts/NotificationContext';
-import  Badge  from './Badge.js';
+import { NotificationContext } from '../../contexts/NotificationContext';
+import  Badge  from '../../components/Badge.js';
 
 const data = [
     {
@@ -24,12 +24,12 @@ const data = [
     //     screen: "MapScreen",
     //     icon: "person-outline",
     // },
-    {
-        id: "3",
-        title: "Chat",
-        screen: "ChatScreen",
-        icon: "chatbubble-outline",
-    },
+    // {
+    //     id: "3",
+    //     title: "Chat",
+    //     screen: "ChatScreen",
+    //     icon: "chatbubble-outline",
+    // },
     {
         id: "4",
         title: "Profile",

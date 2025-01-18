@@ -4,7 +4,7 @@ import {
 } from 'react-native';
 
 import Icon from 'react-native-vector-icons/FontAwesome';
-import OfferModal from '../components/OfferModal';
+import OfferModal from './OfferModal';
 import { useNavigation } from '@react-navigation/native';
 import MapComponent from './MapComponent';
 

@@ -151,7 +151,7 @@ const ActivityScreen = () => {
           );
       
           const sortedTasks = tasksWithReviewStatus.sort((a, b) => b.hasNotification - a.hasNotification);
-          console.log('Tasks fetched in ActivityScreen:', sortedTasks);
+          //console.log('Tasks fetched in ActivityScreen:', sortedTasks);
           setTasks(sortedTasks);
         } else {
           setTasks([]);

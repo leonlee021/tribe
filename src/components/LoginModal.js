@@ -101,52 +101,58 @@ const LoginModal = ({ visible, onClose, onLoginSuccess }) => {
     };
 
     const handleLogin = async () => {
-        // Input validation
         if (!validateEmail(email)) {
             setErrorMessage('Please enter a valid email address.');
             return;
         }
-        if (password.length < 7) {
-            setErrorMessage('Password must be at least 7 characters long.');
-            return;
-        }
-
+    
         try {
             setLoading(true);
-            const userCredential = await auth().signInWithEmailAndPassword(email.trim(), password);
+            
+            // Simple sign out first
+            try {
+                await auth().signOut();
+            } catch (e) {
+                // Ignore sign out errors
+            }
+    
+            // Simple login attempt
+            const userCredential = await auth().signInWithEmailAndPassword(
+                email.trim(),
+                password
+            );
+    
             const user = userCredential.user;
-
+            
             if (!user.emailVerified) {
                 Alert.alert('Email not verified', 'Please verify your email before logging in.');
                 setLoading(false);
                 return;
             }
-
-            // Get Firebase ID token
+    
             const idToken = await user.getIdToken();
-
-            // Store token in AsyncStorage
             await AsyncStorage.setItem('userToken', idToken);
-
-            // Fetch user profile from your backend
+    
             const userProfileResponse = await api.get('/users/profile', {
                 headers: {
                     Authorization: `Bearer ${idToken}`,
                 },
             });
-
-            // Update UserContext with fetched user data
+    
             setUser(userProfileResponse.data);
-
-            onLoginSuccess(); // Notify parent that login was successful
-            setLoading(false);
+            onLoginSuccess();
+    
         } catch (error) {
-            console.error('Login error:', error.message);
-            handleAuthError(error);
+            console.error('Login error:', error.code, error.message);
+            Alert.alert(
+                'Login Error',
+                'Please check your email and password and try again.'
+            );
+        } finally {
             setLoading(false);
         }
     };
-
+    
     const handleSignUp = async () => {
         // Input validation
         if (firstName.trim() === '' || lastName.trim() === '') {

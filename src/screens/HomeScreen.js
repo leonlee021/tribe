@@ -10,15 +10,16 @@ import TaskPost from '../components/TaskPost';
 import { UserContext } from '../contexts/UserContext';
 import { fetchNotifications, clearTaskNotifications } from '../services/notificationService';
 import { NotificationContext } from '../contexts/NotificationContext';
+import { useUI } from '../providers/UIProvider';
 
 const HomeScreen = () => {
     const [tasks, setTasks] = useState([]);
     const [refreshing, setRefreshing] = useState(false); 
     const navigation = useNavigation();
     const [isLoading, setIsLoading] = useState(true);
-    const { badgeCounts, setBadgeCounts, notifications, fetchNotifications } = useContext(NotificationContext); 
-
+    //const { badgeCounts, setBadgeCounts, notifications, fetchNotifications } = useContext(NotificationContext); 
     const { user, fetchUserProfile } = useContext(UserContext);
+    const { useNewComponents } = useUI();
 
     useEffect(() => {
         const initialize = async () => {
@@ -197,6 +198,10 @@ const HomeScreen = () => {
             />
         );
     };
+
+    if (useNewComponents) {
+        return <v2HomeScreen />;
+    }
 
     return (
         <SafeAreaView style={styles.container}>

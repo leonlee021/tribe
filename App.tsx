@@ -11,13 +11,18 @@ import { NotificationProvider } from './src/contexts/NotificationContext';
 import NotificationHandler from './src/handlers/NotificationHandler';
 import * as Notifications from 'expo-notifications';
 import { registerDeviceForNotifications } from './src/services/notificationService';
+import { UIProvider } from './src/providers/UIProvider';
 
-import HomeScreen from './src/screens/HomeScreen';
-import TabBar from './src/components/TabBar';
+//import HomeScreen from './src/screens/HomeScreen'; // v1
+import HomeScreen from './src/v2/screens/HomeScreen'; // v2
+//import TabBar from './src/components/TabBar'; // v1
+import TabBar from './src/v2/components/TabBar'; // v2
 import ActivityScreen from './src/screens/ActivityScreen';
 import ChatScreen from './src/screens/ChatScreen';
-import ProfileScreen from './src/screens/ProfileScreen';
-import CustomScreen from './src/screens/CustomScreen';
+// import ProfileScreen from './src/screens/ProfileScreen'; // v1
+import ProfileScreen from './src/v2/screens/ProfileScreen'; // v2
+//import CustomScreen from './src/screens/CustomScreen'; // v1
+//import CustomScreen from './src/v2/screens/CustomScreen'; // v2
 import EditProfileScreen from './src/screens/EditProfileScreen';
 import ChatDetailScreen from './src/screens/ChatDetailScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
@@ -94,6 +99,7 @@ export default function App() {
 
   return (
     <StripeProvider publishableKey='pk_live_51Q2x7bGdzGxBezt1OVdOu1jJNemuxUmFEbUXdHuberB9Ps34hI9nbTLM7wzb75WvajXuqWsFj2rN4ysbGNjmBpzy00HU5DgB7s'>
+    <UIProvider>
     <UserProvider>
     <NavigationContainer>
     <NotificationProvider>
@@ -130,11 +136,11 @@ export default function App() {
               headerShown: false,
               }}
           />
-          <Stack.Screen name = 'CustomScreen' component={CustomScreen} 
+          {/* <Stack.Screen name = 'CustomScreen' component={CustomScreen} 
               options = {{
               headerShown: false,
               }}
-          />
+          /> */}
           <Stack.Screen name = 'SettingsScreen' component={SettingsScreen} 
               options = {{
               headerShown: false,
@@ -164,6 +170,7 @@ export default function App() {
     </NotificationProvider>
     </NavigationContainer>
     </UserProvider>
+    </UIProvider>
     </StripeProvider>
   );
 }
