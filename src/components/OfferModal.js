@@ -10,7 +10,8 @@ import {
 } from 'react-native';
 
 const OfferModal = ({ task, isVisible, onClose, onSubmitOffer }) => {
-  const [offerPrice, setOfferPrice] = useState(task.price.toString());
+  //const [offerPrice, setOfferPrice] = useState(task.price.toString());
+  const [offerPrice, setOfferPrice] = useState('');
   const [offerMessage, setOfferMessage] = useState('');
 
   const handleSubmit = () => {

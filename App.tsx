@@ -17,7 +17,8 @@ import { UIProvider } from './src/providers/UIProvider';
 import HomeScreen from './src/v2/screens/HomeScreen'; // v2
 //import TabBar from './src/components/TabBar'; // v1
 import TabBar from './src/v2/components/TabBar'; // v2
-import ActivityScreen from './src/screens/ActivityScreen';
+// import ActivityScreen from './src/screens/ActivityScreen'; // v1
+import ActivityScreen from './src/v2/screens/ActivityScreen'; // v2
 import ChatScreen from './src/screens/ChatScreen';
 // import ProfileScreen from './src/screens/ProfileScreen'; // v1
 import ProfileScreen from './src/v2/screens/ProfileScreen'; // v2

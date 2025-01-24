@@ -1,14 +1,75 @@
-// NotificationHandler.js
 import React, { useEffect, useContext } from 'react';
+import { Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NotificationContext } from '../contexts/NotificationContext';
-import { registerDeviceForNotifications } from '../services/notificationService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import messaging from '@react-native-firebase/messaging';
+import * as Notifications from 'expo-notifications';
+
+const updateBackendWithToken = async (fcmToken) => {
+  try {
+    const userToken = await AsyncStorage.getItem('userToken');
+    const apiUrl = 'https://mutually-618cad73c12d.herokuapp.com'; // Using direct URL for now
+    
+    console.log('🔍 Making request with:', {
+      fcmToken: fcmToken,
+      platform: Platform.OS,
+      hasUserToken: !!userToken
+    });
+
+    const response = await fetch(`${apiUrl}/notifications/update-fcm-token`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${userToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        fcmToken,
+        platform: Platform.OS
+      })
+    });
+
+    // Log the raw response
+    const rawResponse = await response.text();
+    console.log('🔍 Raw response:', rawResponse);
+    
+    // Try to parse if it's JSON
+    let data;
+    try {
+      data = JSON.parse(rawResponse);
+      console.log('🔍 Parsed response:', data);
+    } catch (e) {
+      console.log('🔴 Could not parse response as JSON');
+      return false;
+    }
+
+    return data.success;
+  } catch (error) {
+    console.error('🔴 Error updating backend with FCM token:', error);
+    return false;
+  }
+};
+
+export const getTestFCMToken = async () => {
+  try {
+    const token = await messaging().getToken();
+    console.log('🎯 Test FCM Token:', token);
+    // Also update backend when getting test token
+    await updateBackendWithToken(token);
+    return token;
+  } catch (error) {
+    console.error('🔴 Error getting test FCM token:', error);
+    return null;
+  }
+};
 
 const NotificationHandler = () => {
   const navigation = useNavigation();
   const { handleNewNotification } = useContext(NotificationContext);
+
+  useEffect(() => {
+    getTestFCMToken();
+  }, []);
 
   useEffect(() => {
     let foregroundSubscription;
@@ -21,68 +82,63 @@ const NotificationHandler = () => {
           authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
           authStatus === messaging.AuthorizationStatus.PROVISIONAL;
 
-        console.log('Notification authorization status:', authStatus);
+        console.log('🟡 Notification authorization status:', authStatus);
         
         if (!enabled) {
-          console.log('Notifications not enabled');
+          console.log('🔴 Notifications not enabled');
           return;
         }
 
-        // Get FCM token
-        const token = await messaging().getToken();
-        console.log('Current FCM token:', token);
+        // Configure how notifications appear when app is in foreground
+        Notifications.setNotificationHandler({
+          handleNotification: async () => ({
+            shouldShowAlert: true,
+            shouldPlaySound: true,
+            shouldSetBadge: true,
+          }),
+        });
 
-        // Set up foreground handler
+        // Get FCM token and update backend
+        const token = await messaging().getToken();
+        console.log('🟢 Generated FCM token:', token);
+        
+        await AsyncStorage.setItem('fcmToken', token);
+        console.log('🟢 Stored FCM token in AsyncStorage');
+        
+        const updateSuccess = await updateBackendWithToken(token);
+        console.log('🟢 Backend token update success:', updateSuccess);
+
+        // Rest of your existing notification setup code...
         foregroundSubscription = messaging().onMessage(async remoteMessage => {
           try {
             console.log('🔵 Foreground message received:', remoteMessage);
             await handleNewNotification(remoteMessage);
+            
+            await Notifications.scheduleNotificationAsync({
+              content: {
+                title: remoteMessage.notification?.title || '',
+                body: remoteMessage.notification?.body || '',
+                data: remoteMessage.data,
+              },
+              trigger: null,
+            });
           } catch (error) {
-            console.error('Error handling foreground message:', error);
+            console.error('🔴 Error handling foreground message:', error);
           }
         });
 
-        // Set up background handler
-        messaging().setBackgroundMessageHandler(async remoteMessage => {
-          try {
-            console.log('🔵 Background message received:', remoteMessage);
-            await handleNewNotification(remoteMessage);
-          } catch (error) {
-            console.error('Error handling background message:', error);
-          }
-          return Promise.resolve();
-        });
-
-        // Handle notification open events
-        messaging().onNotificationOpenedApp(async remoteMessage => {
-          try {
-            console.log('🔵 Notification opened app:', remoteMessage);
-            await handleNewNotification(remoteMessage);
-          } catch (error) {
-            console.error('Error handling notification open:', error);
-          }
-        });
-
-        // Check for initial notification
-        const initialNotification = await messaging().getInitialNotification();
-        if (initialNotification) {
-          try {
-            console.log('🔵 Initial notification:', initialNotification);
-            await handleNewNotification(initialNotification);
-          } catch (error) {
-            console.error('Error handling initial notification:', error);
-          }
-        }
-
-        // Add token refresh handler
+        // Update backend on token refresh
         messaging().onTokenRefresh(async newToken => {
           try {
             console.log('🔵 FCM token refreshed:', newToken);
             await AsyncStorage.setItem('fcmToken', newToken);
+            await updateBackendWithToken(newToken);
           } catch (error) {
-            console.error('Error handling token refresh:', error);
+            console.error('🔴 Error handling token refresh:', error);
           }
         });
+
+        // Rest of your existing handlers...
 
       } catch (error) {
         console.error('🔴 Error setting up notifications:', error);
@@ -94,31 +150,21 @@ const NotificationHandler = () => {
       console.error('🔴 Unhandled error in notification setup:', error);
     });
 
-    // Cleanup
     return () => {
-      console.log('🟡 Cleaning up notification handlers...');
       if (foregroundSubscription) {
         foregroundSubscription();
       }
     };
-  }, [handleNewNotification]);
+  }, [handleNewNotification, navigation]);
 
-  // Add periodic permission check
-  useEffect(() => {
-    const checkPermissions = async () => {
-      try {
-        const authStatus = await messaging().hasPermission();
-        console.log('🟡 Current notification permission status:', authStatus);
-      } catch (error) {
-        console.error('🔴 Error checking notification permissions:', error);
-      }
-    };
+  const handleNotificationNavigation = (message) => {
+    if (!message?.data) return;
 
-    checkPermissions();
-    const interval = setInterval(checkPermissions, 10000); // Check every 10 seconds
-
-    return () => clearInterval(interval);
-  }, []);
+    const { screen, params } = message.data;
+    if (screen) {
+      navigation.navigate(screen, params ? JSON.parse(params) : undefined);
+    }
+  };
 
   return null;
 };

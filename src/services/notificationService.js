@@ -142,12 +142,18 @@ export const updateFcmToken = async (fcmToken) => {
   }
 };
 
+// Update registerDeviceForNotifications in notificationService.js
 export const registerDeviceForNotifications = async () => {
   try {
-    const permission = await requestUserPermission();
-    if (!permission) {
-      console.log('Notification permission not granted');
-      return false;
+    // Only request permission once
+    const permissionStatus = await messaging().hasPermission();
+    
+    if (permissionStatus === messaging.AuthorizationStatus.NOT_DETERMINED) {
+      const permission = await requestUserPermission();
+      if (!permission) {
+        console.log('Notification permission not granted');
+        return false;
+      }
     }
 
     const fcmToken = await getFcmToken();
@@ -156,17 +162,10 @@ export const registerDeviceForNotifications = async () => {
       return false;
     }
 
-    // Set up token refresh handler
-    const unsubscribeTokenRefresh = messaging().onTokenRefresh(async (newToken) => {
-      console.log('FCM Token refreshed');
-      await updateFcmToken(newToken);
-    });
-
     // Update backend with current token
     const success = await updateFcmToken(fcmToken);
     if (!success) {
       console.log('Failed to update FCM token in backend');
-      unsubscribeTokenRefresh();
       return false;
     }
 

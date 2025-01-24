@@ -11,7 +11,7 @@ import { useFocusEffect, useRoute, useNavigation } from '@react-navigation/nativ
 import api from '../../services/api';
 import LoginPromptModal from '../../components/LoginModal';
 import * as ImagePicker from 'expo-image-picker';
-import ProfileTaskPost from '../../components/ProfileTaskPost';
+import ProfileTaskPost from '../components/ProfileTaskPost';
 import { UserContext } from '../../contexts/UserContext'; // Import UserContext
 import NotificationDebug from '../../components/NotificationDebug';
 import authService from '../../services/authService';
@@ -27,7 +27,7 @@ const ProfileScreen = ({ navigation }) => {
   const [tasksRequested, setTasksRequested] = useState([]);
   const [tasksCompleted, setTasksCompleted] = useState([]);
   const [averageRating, setAverageRating] = useState(null); 
-  const [selectedTab, setSelectedTab] = useState('info'); // Initialize selectedTab
+  const [selectedTab, setSelectedTab] = useState('requested'); // Initialize selectedTab
   const [hiddenTasks, setHiddenTasks] = useState([]);
   const [ratingsCount, setRatingsCount] = useState(0); // New state for ratingsCount
   const [tasksAssigned, setTasksAssigned] = useState(0);
@@ -74,12 +74,17 @@ const ProfileScreen = ({ navigation }) => {
   // Fetch user tasks
   const fetchUserTasks = async (userIdParam) => {
     if (!userIdParam) return;
+
+    console.log('Fetching tasks for user:', userIdParam);
   
     const [requestedResponse, taskerResponse, cancellationsResponse] = await Promise.all([
-      authService.fetchWithSilentAuth(() => api.get(`/tasks/user/${userIdParam}`)),
-      authService.fetchWithSilentAuth(() => api.get(`/tasks/tasker/${userIdParam}`)),
-      authService.fetchWithSilentAuth(() => api.get(`/cancellations/tasker/${userIdParam}`))
+        authService.fetchWithSilentAuth(() => api.get(`/v2/tasks/user/${userIdParam}`)),
+        authService.fetchWithSilentAuth(() => api.get(`/v2/tasks/tasker/${userIdParam}`)),
+        authService.fetchWithSilentAuth(() => api.get(`/cancellations/tasker/${userIdParam}`))
     ]);
+
+    console.log('Requested tasks:', requestedResponse?.data);
+    console.log('Tasker tasks:', taskerResponse?.data);
   
     // Extract tasks with null checks
     const requestedTasks = requestedResponse?.data?.tasks || [];
@@ -87,12 +92,25 @@ const ProfileScreen = ({ navigation }) => {
     const taskerCancellations = cancellationsResponse?.data?.cancellations || [];
 
     const sortedRequestedTasks = requestedTasks
-      .filter(task => task.status === 'completed')
-      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      .filter(task => task.deleted === false)
+      .sort((a, b) => {
+        // First sort by completion status
+        if (a.status === 'completed' && b.status !== 'completed') return 1;
+        if (a.status !== 'completed' && b.status === 'completed') return -1;
+        // Then sort by date for tasks with the same completion status
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      });
+    
 
     const completedTasks = allTaskerTasks
-      .filter(task => task.status === 'completed')
-      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      .filter(task => task.deleted === false)
+      .sort((a, b) => {
+        // First sort by completion status
+        if (a.status === 'completed' && b.status !== 'completed') return 1;
+        if (a.status !== 'completed' && b.status === 'completed') return -1;
+        // Then sort by date for tasks with the same completion status
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      });
   
     // Set tasks requested and tasks completed
     setTasksRequested(sortedRequestedTasks);
@@ -241,6 +259,14 @@ const ProfileScreen = ({ navigation }) => {
             onHide={handleHideTask} 
             isOwnProfile={isOwnProfile}
             profileUser={displayedUser}
+            initialCollapsed={task.status === 'completed'} // Add this line
+            showMinimalInfo={task.status === 'completed'} // Add this line
+            onMarkComplete={(chatId) => handleMarkComplete(chatId)}
+            onCancelTask={(chatId) => handleCancelTask(chatId)}
+            onViewChat={(chatId) => handleViewChat(chatId)}
+            onViewProfile={(userId) => handleViewProfile(userId)}
+            onAcceptOffer={(offerId) => handleAcceptOffer(offerId)}
+            onDeleteTask={(taskId) => handleDeleteTask(taskId)}
           />
         ))
       ) : (
@@ -261,6 +287,14 @@ const ProfileScreen = ({ navigation }) => {
             onHide={handleHideTask} 
             isOwnProfile={isOwnProfile}
             profileUser={displayedUser}
+            initialCollapsed={task.status === 'completed'} // Add this line
+            showMinimalInfo={task.status === 'completed'} // Add this line
+            onMarkComplete={(chatId) => handleMarkComplete(chatId)}
+            onCancelTask={(chatId) => handleCancelTask(chatId)}
+            onViewChat={(chatId) => handleViewChat(chatId)}
+            onViewProfile={(userId) => handleViewProfile(userId)}
+            onAcceptOffer={(offerId) => handleAcceptOffer(offerId)}
+            onDeleteTask={(taskId) => handleDeleteTask(taskId)}
           />
         ))
       ) : (
@@ -287,6 +321,33 @@ const ProfileScreen = ({ navigation }) => {
   
     return stars;
   };
+
+  const testNotification = async () => {
+    try {
+      const response = await fetch('https://mutually-618cad73c12d.herokuapp.com/notifications/test', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + await AsyncStorage.getItem('userToken'),
+          'Content-Type': 'application/json'
+        }
+      });
+      const data = await response.json();
+      console.log('Test notification response:', data);
+    } catch (error) {
+      console.error('Error testing notification:', error);
+    }
+  };
+
+// Add this somewhere in your ProfileScreen:
+const logToken = async () => {
+    const token = await AsyncStorage.getItem('userToken');
+    console.log('Auth Token:', token);
+  };
+  
+  // Call it:
+  useEffect(() => {
+    logToken();
+  }, []);
 
   // Handle Hide Task with confirmation
   const handleHideTask = (taskId) => {
@@ -434,44 +495,7 @@ const ProfileScreen = ({ navigation }) => {
                 <Text style={styles.emptyText}>No ratings yet.</Text>
               )}
             </View>
-            
-            {/* Bio */}
-            {/* <Text style={styles.bioText}>
-              {displayedUser.about || 'No bio available'}
-            </Text> */}
-
-            {/* Edit Profile Button */}
-            {/* {isOwnProfile && (
-              <TouchableOpacity
-                style={styles.editProfileButton}
-                onPress={() => navigation.navigate('EditProfileScreen')}
-              >
-                <FontAwesome name="pencil" size={18} color="#3717ce" style={styles.editIcon} />
-                <Text style={styles.editProfileButtonText}>Edit Profile</Text>
-              </TouchableOpacity>
-            )} */}
           </View>
-
-          {/* Statistics */}
-          {/* <View style={styles.statisticsContainer}>
-            <View style={styles.statItem}>
-              <FontAwesome name="tasks" size={24} color="#3717ce" />
-              <Text style={styles.statNumber}>{tasksRequested.length}</Text>
-              <Text style={styles.statLabel}>Requested</Text>
-            </View>
-            <View style={styles.statItem}>
-              <FontAwesome name="check-circle" size={24} color="#3717ce" />
-              <Text style={styles.statNumber}>{tasksCompleted.length}</Text>
-              <Text style={styles.statLabel}>Completed</Text>
-            </View>
-            <View style={styles.statItem}>
-              <FontAwesome name="line-chart" size={24} color="#3717ce" />
-              <Text style={styles.statNumber}>
-                {completionRate !== null ? `${completionRate}%` : 'N/A'}
-              </Text>
-              <Text style={styles.statLabel}>Completion Rate</Text>
-            </View>
-          </View> */}
 
           {/* Settings Button */}
           {isOwnProfile && (
@@ -492,7 +516,7 @@ const ProfileScreen = ({ navigation }) => {
                 style={[styles.tab, selectedTab === 'requested' && styles.activeTab]}
               >
                 <Text style={[styles.tabText, selectedTab === 'requested' && styles.activeTabText]}>
-                  Requested
+                  Requester
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -500,7 +524,7 @@ const ProfileScreen = ({ navigation }) => {
                 style={[styles.tab, selectedTab === 'completed' && styles.activeTab]}
               >
                 <Text style={[styles.tabText, selectedTab === 'completed' && styles.activeTabText]}>
-                  Completed
+                  Tasker
                 </Text>
               </TouchableOpacity>
             </View>

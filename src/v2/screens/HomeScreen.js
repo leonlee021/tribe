@@ -19,14 +19,16 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { UserContext } from '../../contexts/UserContext';
 import api from '../../services/api';
 import Icon from 'react-native-vector-icons/Ionicons';
+import authService from '../../services/authService';
 
 const { width } = Dimensions.get('window');
 const MAX_WIDTH = Math.min(width * 0.9, 400);
 
 const HomeScreen = () => {
-    const [taskDescription, setTaskDescription] = useState('');
-    const [analyzedData, setAnalyzedData] = useState(null);
+    const [description, setDescription] = useState('');
+    // const [analyzedData, setAnalyzedData] = useState(null);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
     const { user } = useContext(UserContext);
     const [pulseAnim] = useState(new Animated.Value(1));
 
@@ -47,123 +49,52 @@ const HomeScreen = () => {
         Animated.loop(pulse).start();
     }, []);
 
-    const analyzeTask = async () => {
-        if (!taskDescription.trim()) {
+    const handlePost = async () => {
+
+        if (!description.trim()) {
             Alert.alert('Error', 'Please describe your task');
             return;
         }
 
-        setIsAnalyzing(true);
-        try {
-            const token = await AsyncStorage.getItem('userToken');
-            const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-
-            // Call your NLP endpoint
-            const response = await api.post('/analyze-task', {
-                description: taskDescription
-            }, { headers });
-
-            setAnalyzedData(response.data);
-        } catch (error) {
-            console.error('Error analyzing task:', error);
-            Alert.alert('Error', 'Failed to analyze task description');
-        } finally {
-            setIsAnalyzing(false);
-        }
-    };
-
-    const handlePost = async () => {
-        if (!analyzedData) {
-            Alert.alert('Error', 'Please analyze the task first');
-            return;
-        }
+        setIsLoading(true);
 
         try {
+            console.log('Attempting to create task...');
             const token = await AsyncStorage.getItem('userToken');
             if (!token) {
                 Alert.alert('Error', 'You must be logged in to post a task');
                 return;
             }
 
-            const response = await api.post('/tasks', {
-                description: taskDescription,
-                ...analyzedData,
-            }, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            console.log('Making request to:', '/v2/tasks');
+            console.log('With data:', { description: description.trim() });
+            console.log('With token:', token)
 
-            if (response.status === 201) {
-                Alert.alert('Success', 'Task has been posted!');
-                setTaskDescription('');
-                setAnalyzedData(null);
+            const response = await authService.fetchWithSilentAuth(api => 
+                api.post('/v2/tasks', {
+                    description: description.trim()
+                })
+            );
+
+            console.log('Task creation response:', response.data);
+
+            if (response?.data) {
+                Alert.alert(
+                    'Success', 
+                    'Task has been posted!',
+                    [{ text: 'OK', onPress: () => setDescription('') }]
+                );
+            } else {
+                console.log('Response without data:', response);
+                Alert.alert('Error', 'Failed to post task - no data returned');
             }
         } catch (error) {
             console.error('Error posting task:', error);
             Alert.alert('Error', 'Failed to post the task');
+        } finally {
+            setIsLoading(false);
         }
-    };
 
-    const renderAnalysis = () => {
-        if (!analyzedData) return null;
-
-        return (
-            <View style={styles.analysisContainer}>
-                <View style={styles.analysisHeader}>
-                    <View style={styles.glowCircle}>
-                        <Icon name="checkmark-circle" size={24} color="#fff" />
-                    </View>
-                    <Text style={styles.sectionTitle}>AI Analysis Complete</Text>
-                </View>
-
-                <View style={styles.detailsList}>
-                    {analyzedData.locations?.map((location, index) => (
-                        <View key={index} style={styles.detailCard}>
-                            <View style={[styles.iconContainer, { backgroundColor: '#2D3748' }]}>
-                                <Icon name="location" size={20} color="#fff" />
-                            </View>
-                            <View style={styles.detailContent}>
-                                <Text style={styles.detailLabel}>
-                                    {location.type === 'pickup' ? 'Pickup Location' : 'Dropoff Location'}
-                                </Text>
-                                <Text style={styles.detailText}>{location.address}</Text>
-                            </View>
-                        </View>
-                    ))}
-
-                    {analyzedData.deadline && (
-                        <View style={styles.detailCard}>
-                            <View style={[styles.iconContainer, { backgroundColor: '#2D3748' }]}>
-                                <Icon name="time" size={20} color="#fff" />
-                            </View>
-                            <View style={styles.detailContent}>
-                                <Text style={styles.detailLabel}>Deadline</Text>
-                                <Text style={styles.detailText}>{analyzedData.deadline}</Text>
-                            </View>
-                        </View>
-                    )}
-
-                    {analyzedData.estimatedPrice && (
-                        <View style={styles.detailCard}>
-                            <View style={[styles.iconContainer, { backgroundColor: '#2D3748' }]}>
-                                <Icon name="wallet" size={20} color="#fff" />
-                            </View>
-                            <View style={styles.detailContent}>
-                                <Text style={styles.detailLabel}>Estimated Price</Text>
-                                <Text style={styles.detailText}>{analyzedData.estimatedPrice}</Text>
-                            </View>
-                        </View>
-                    )}
-                </View>
-
-                <TouchableOpacity 
-                    style={styles.submitButton} 
-                    onPress={handlePost}
-                >
-                    <Text style={styles.submitButtonText}>Confirm Task</Text>
-                    <Icon name="arrow-forward" size={20} color="#fff" style={styles.submitButtonIcon} />
-                </TouchableOpacity>
-            </View>
-        );
     };
 
     return (
@@ -187,23 +118,26 @@ const HomeScreen = () => {
                         <View style={styles.inputWrapper}>
                             <Animated.View style={[
                                 styles.inputContainer,
-                                { transform: [{ scale: !analyzedData ? pulseAnim : 1 }] }
+                                // { transform: [{ scale: !analyzedData ? pulseAnim : 1 }] }
                             ]}>
                                 <TextInput
                                     style={styles.textArea}
                                     placeholder="Describe your task with all relevant details (ie. location, time, etc.)"
                                     placeholderTextColor="#999"
                                     multiline
-                                    value={taskDescription}
-                                    onChangeText={setTaskDescription}
+                                    value={description}
+                                    onChangeText={setDescription}
                                     textAlignVertical="top"
                                 />
                             </Animated.View>
 
                             <TouchableOpacity 
-                                style={[styles.analyzeButton, isAnalyzing && styles.disabledButton]}
-                                onPress={analyzeTask}
-                                disabled={isAnalyzing}
+                                style={[
+                                    styles.postButton,
+                                    (!description.trim() || isLoading) 
+                                ]}
+                                onPress={handlePost}
+                                disabled={!description.trim() || isLoading}
                             >
                                 {isAnalyzing ? (
                                     <ActivityIndicator color="#fff" />
@@ -215,8 +149,6 @@ const HomeScreen = () => {
                                 )}
                             </TouchableOpacity>
                         </View>
-
-                        {renderAnalysis()}
                     </View>
                 </ScrollView>
             </KeyboardAvoidingView>
@@ -278,7 +210,7 @@ const styles = StyleSheet.create({
         color: '#333',
         lineHeight: 24,
     },
-    analyzeButton: {
+    postButton: {
         backgroundColor: '#3717ce',
         padding: 18,
         borderRadius: 16,
