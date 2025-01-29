@@ -75,7 +75,7 @@ const ProfileScreen = ({ navigation }) => {
   const fetchUserTasks = async (userIdParam) => {
     if (!userIdParam) return;
 
-    console.log('Fetching tasks for user:', userIdParam);
+    // console.log('Fetching tasks for user:', userIdParam);
   
     const [requestedResponse, taskerResponse, cancellationsResponse] = await Promise.all([
         authService.fetchWithSilentAuth(() => api.get(`/v2/tasks/user/${userIdParam}`)),
@@ -83,8 +83,8 @@ const ProfileScreen = ({ navigation }) => {
         authService.fetchWithSilentAuth(() => api.get(`/cancellations/tasker/${userIdParam}`))
     ]);
 
-    console.log('Requested tasks:', requestedResponse?.data);
-    console.log('Tasker tasks:', taskerResponse?.data);
+    // console.log('Requested tasks:', requestedResponse?.data);
+    // console.log('Tasker tasks:', taskerResponse?.data);
   
     // Extract tasks with null checks
     const requestedTasks = requestedResponse?.data?.tasks || [];
@@ -259,8 +259,6 @@ const ProfileScreen = ({ navigation }) => {
             onHide={handleHideTask} 
             isOwnProfile={isOwnProfile}
             profileUser={displayedUser}
-            initialCollapsed={task.status === 'completed'} // Add this line
-            showMinimalInfo={task.status === 'completed'} // Add this line
             onMarkComplete={(chatId) => handleMarkComplete(chatId)}
             onCancelTask={(chatId) => handleCancelTask(chatId)}
             onViewChat={(chatId) => handleViewChat(chatId)}
@@ -287,8 +285,6 @@ const ProfileScreen = ({ navigation }) => {
             onHide={handleHideTask} 
             isOwnProfile={isOwnProfile}
             profileUser={displayedUser}
-            initialCollapsed={task.status === 'completed'} // Add this line
-            showMinimalInfo={task.status === 'completed'} // Add this line
             onMarkComplete={(chatId) => handleMarkComplete(chatId)}
             onCancelTask={(chatId) => handleCancelTask(chatId)}
             onViewChat={(chatId) => handleViewChat(chatId)}
@@ -341,7 +337,7 @@ const ProfileScreen = ({ navigation }) => {
 // Add this somewhere in your ProfileScreen:
 const logToken = async () => {
     const token = await AsyncStorage.getItem('userToken');
-    console.log('Auth Token:', token);
+    // console.log('Auth Token:', token);
   };
   
   // Call it:

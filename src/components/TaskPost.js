@@ -201,8 +201,7 @@ const TaskPost = ({
           task={task}
           isVisible={isOfferModalVisible}
           onClose={() => setIsOfferModalVisible(false)}
-          onSubmitOffer={(taskId, offerPrice, offerMessage) => {
-            handleSubmitOffer(taskId, offerPrice, offerMessage);
+          onSubmitOffer={(taskId, offerPrice, offerMessage) => {handleSubmitOffer(taskId, offerPrice, offerMessage);
           }}
         />
       )}

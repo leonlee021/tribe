@@ -77,16 +77,18 @@ const ActivityScreen = () => {
         const response = await authService.fetchWithSilentAuth(api => api.get('/v2/tasks'));
         if (response?.data) {
             const tasksWithReviewStatus = await Promise.all(
-                response.data.map(async task => {
-                    const { hasSubmittedReview } = task.status === 'completed' 
-                        ? { hasSubmittedReview: await fetchHasSubmittedReview(task.id) }
-                        : { hasSubmittedReview: false };
-                    
-                    const counts = getTaskNotificationCount(task.id);
-                    const hasNotification = Object.values(counts).some(count => count > 0);
-                    
-                    return { ...task, hasSubmittedReview, hasNotification };
-                })
+                response.data
+                    .filter(task => task.status === 'open') // Filter tasks with status 'open'
+                    .map(async task => {
+                        const { hasSubmittedReview } = task.status === 'completed' 
+                            ? { hasSubmittedReview: await fetchHasSubmittedReview(task.id) }
+                            : { hasSubmittedReview: false };
+                        
+                        const counts = getTaskNotificationCount(task.id);
+                        const hasNotification = Object.values(counts).some(count => count > 0);
+                        
+                        return { ...task, hasSubmittedReview, hasNotification };
+                    })
             );
             setTasks(tasksWithReviewStatus.sort((a, b) => b.hasNotification - a.hasNotification));
         } else {
@@ -309,26 +311,62 @@ const ActivityScreen = () => {
 
     const handleSubmitOffer = async (taskId, offerPrice, offerMessage) => {
         try {
+            // Input validation
+            if (!taskId || !offerPrice || !offerMessage) {
+                Alert.alert('Error', 'All fields are required');
+                return;
+            }
+    
+            // Ensure offerMessage is a string
+            const messageStr = String(offerMessage);
+            const price = Number(offerPrice);
+    
+            if (isNaN(price) || price <= 0) {
+                Alert.alert('Error', 'Please enter a valid price');
+                return;
+            }
+    
             const token = await AsyncStorage.getItem('userToken');
-            const response = await api.post(`/tasks/${taskId}/offers`, {
-                offerPrice,
-                offerMessage
+            if (!token) {
+                Alert.alert('Error', 'Not authenticated. Please log in again.');
+                return;
+            }
+    
+            const response = await api.post('/offers', {
+                taskId,
+                offerPrice: price,
+                offerMessage: messageStr,
+                isV2Task: true
             }, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { 
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
             });
             
             if (response.status === 201) {
                 await fetchTasks();
-                Alert.alert('Offer Submitted', 'Your application has been sent!');
+                Alert.alert('Success', 'Your offer has been submitted!');
             }
         } catch (error) {
-            Alert.alert('Error', error.response?.data?.message || 'Failed to submit offer');
+            console.error('Error submitting offer:', {
+                message: error.message,
+                data: error.response?.data,
+                status: error.response?.status
+            });
+            
+            let errorMessage = 'Failed to submit offer.';
+            if (error.response?.data?.message) {
+                errorMessage = error.response.data.message;
+            }
+            
+            Alert.alert('Error', errorMessage);
         }
     };
 
 
-
     const renderItem = ({ item }) => {
+        if (item.status !== 'open') return null; 
         const counts = getTaskNotificationCount(item.id);
         const isRequester = item.userId === user?.id;
         const notificationCount = isRequester 
@@ -353,7 +391,6 @@ const ActivityScreen = () => {
                 onSubmitOffer={handleSubmitOffer}
                 isTaskOwner={isRequester}
                 taskStatus={item.status}
-                offers={item.offers}
             />
         );
     };
@@ -370,7 +407,7 @@ const ActivityScreen = () => {
                     keyExtractor={(item) => item.id.toString()}
                     renderItem={renderItem}
                     ListEmptyComponent={
-                        <Text style={styles.emptyText}>No tasks to display. Your tasks will show up here!</Text>
+                        <Text style={styles.emptyText}>No open tasks to display. Open tasks will show up here!</Text>
                     }
                     contentContainerStyle={styles.contentContainer}
                     style={styles.list} 

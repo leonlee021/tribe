@@ -19,12 +19,13 @@ const ExpandableTaskPost = ({
   onDeleteTask,
   notificationCount = 0,
   hasSubmittedReview = false,
+  isExpanded,
+  setIsExpanded,
   onSubmitOffer,
   isTaskOwner,
   taskStatus,
-  offers,
 }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+
   const [review, setReview] = useState('');
   const [rating, setRating] = useState(0);
   const [showMap, setShowMap] = useState(false);
@@ -35,7 +36,7 @@ const ExpandableTaskPost = ({
   const isTaskCancelled = task.cancellations?.length > 0;
   const formattedDate = formatDate(task.createdAt);
 
-  const userHasApplied = offers?.some(offer => 
+  const userHasApplied = task.offers?.some(offer => 
     String(offer.taskerId) === String(loggedInUserId)
   );
 
@@ -60,7 +61,7 @@ const ExpandableTaskPost = ({
                     style={styles.applyButton}
                     onPress={() => setIsOfferModalVisible(true)}
                 >
-                    <Text style={styles.applyButtonText}>Apply for Task</Text>
+                    <Text style={styles.applyButtonText}>Accept Task</Text>
                 </TouchableOpacity>
             ) : (
                 <Text style={styles.appliedText}>You've already applied</Text>
@@ -124,7 +125,7 @@ const ExpandableTaskPost = ({
 
       <Text style={styles.description} numberOfLines={2}>
         {task.description}
-      </Text>
+      </Text>  
 
       <View style={styles.footer}>
         <View style={styles.taskerInfo}>
@@ -154,7 +155,7 @@ const ExpandableTaskPost = ({
             {renderStatusBadge(task.status)}
           </View>
 
-          <Text style={styles.modalTitle}>{task.taskName || 'Untitled Task'}</Text>
+          {/* <Text style={styles.modalTitle}>{task.taskName || 'Untitled Task'}</Text> */}
           <Text style={styles.modalPrice}>${task.price}</Text>
 
           <View style={styles.requesterInfo}>
