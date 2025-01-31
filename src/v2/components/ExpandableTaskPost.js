@@ -31,6 +31,7 @@ const ExpandableTaskPost = ({
   const [showMap, setShowMap] = useState(false);
   const [isOfferModalVisible, setIsOfferModalVisible] = useState(false);
   const navigation = useNavigation();
+  const [showOffers, setShowOffers] = useState(false);
 
   // const isTaskOwner = String(task.userId) === String(loggedInUserId);
   const isTaskCancelled = task.cancellations?.length > 0;
@@ -199,46 +200,62 @@ const ExpandableTaskPost = ({
             </View>
           )}
 
-          {/* Add offers section */}
           {isTaskOwner && task.offers && task.offers.length > 0 && (
             <View style={styles.offersContainer}>
-              <Text style={styles.sectionTitle}>Offers</Text>
-              {task.offers.map((offer) => (
-                <View key={offer.id} style={styles.offerItem}>
-                  <TouchableOpacity onPress={() => onViewProfile(offer.tasker?.id)} style={styles.offerHeader}>
-                    {offer.tasker?.profilePhotoUrl ? (
-                      <Image source={{ uri: offer.tasker.profilePhotoUrl }} style={styles.offerProfilePhoto} />
-                    ) : (
-                      <Icon name="user-circle" size={50} color="#e1e1e1" />
-                    )}
-                    <View style={styles.offerTaskerInfo}>
-                      <Text style={styles.offerTaskerName}>{`${offer.tasker.firstName} ${offer.tasker.lastName}`}</Text>
-                      <View style={styles.ratingContainer}>
-                        <Icon name="star" size={14} color="#FFD700" />
-                        <Text style={styles.averageRating}>
-                          {offer.tasker.averageRating ? offer.tasker.averageRating.toFixed(1) : 'N/A'}
-                        </Text>
-                      </View>
-                    </View>
-                  </TouchableOpacity>
-                  <Text style={styles.offerPrice}>${parseFloat(offer.offerPrice).toFixed(2)}</Text>
-                  <Text style={styles.offerMessage}>{offer.offerMessage || 'No message provided.'}</Text>
-                  {offer.status === 'accepted' && (
-                    <Text style={styles.acceptedLabel}>Offer Accepted</Text>
-                  )}
-                  {offer.status === 'cancelled' && (
-                    <Text style={styles.cancelledLabel}>Offer Cancelled</Text>
-                  )}
-                  {offer.status !== 'accepted' && offer.status !== 'cancelled' && task.status !== 'active' && (
-                    <TouchableOpacity
-                      style={styles.acceptOfferButton}
-                      onPress={() => onAcceptOffer(offer.id)}
-                    >
-                      <Text style={styles.acceptOfferButtonText}>Accept Offer</Text>
-                    </TouchableOpacity>
-                  )}
+              <TouchableOpacity 
+                style={styles.toggleButton}
+                onPress={() => setShowOffers(!showOffers)} // Add this state with useState
+              >
+                <View style={styles.toggleHeader}>
+                  <Text style={styles.sectionTitle}>Offers ({task.offers.length})</Text>
+                  <Icon 
+                    name={showOffers ? "chevron-up" : "chevron-down"} 
+                    size={16} 
+                    color="#666"
+                  />
                 </View>
-              ))}
+              </TouchableOpacity>
+
+              {showOffers && (
+                <View style={styles.offersList}>
+                  {task.offers.map((offer) => (
+                    <View key={offer.id} style={styles.offerItem}>
+                      <TouchableOpacity onPress={() => onViewProfile(offer.tasker?.id)} style={styles.offerHeader}>
+                        {offer.tasker?.profilePhotoUrl ? (
+                          <Image source={{ uri: offer.tasker.profilePhotoUrl }} style={styles.offerProfilePhoto} />
+                        ) : (
+                          <Icon name="user-circle" size={50} color="#e1e1e1" />
+                        )}
+                        <View style={styles.offerTaskerInfo}>
+                          <Text style={styles.offerTaskerName}>{`${offer.tasker.firstName} ${offer.tasker.lastName}`}</Text>
+                          <View style={styles.ratingContainer}>
+                            <Icon name="star" size={14} color="#FFD700" />
+                            <Text style={styles.averageRating}>
+                              {offer.tasker.averageRating ? offer.tasker.averageRating.toFixed(1) : 'N/A'}
+                            </Text>
+                          </View>
+                        </View>
+                      </TouchableOpacity>
+                      <Text style={styles.offerPrice}>${parseFloat(offer.offerPrice).toFixed(2)}</Text>
+                      <Text style={styles.offerMessage}>{offer.offerMessage || 'No message provided.'}</Text>
+                      {offer.status === 'accepted' && (
+                        <Text style={styles.acceptedLabel}>Offer Accepted</Text>
+                      )}
+                      {offer.status === 'cancelled' && (
+                        <Text style={styles.cancelledLabel}>Offer Cancelled</Text>
+                      )}
+                      {offer.status !== 'accepted' && offer.status !== 'cancelled' && task.status !== 'active' && (
+                        <TouchableOpacity
+                          style={styles.acceptOfferButton}
+                          onPress={() => onAcceptOffer(offer.id)}
+                        >
+                          <Text style={styles.acceptOfferButtonText}>Accept Offer</Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  ))}
+                </View>
+              )}
             </View>
           )}
 
@@ -624,6 +641,35 @@ acceptOfferButton: {
 acceptOfferButtonText: {
   color: '#fff',
   fontWeight: '500',
+},
+toggleButton: {
+  paddingVertical: 12,
+  paddingHorizontal: 16,
+  backgroundColor: '#f8f9fa',
+  borderRadius: 8,
+  marginBottom: 12,
+  shadowColor: '#000',
+  shadowOffset: {
+    width: 0,
+    height: 1,
+  },
+  shadowOpacity: 0.1,
+  shadowRadius: 2,
+  elevation: 2,
+},
+toggleHeader: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+},
+sectionTitle: {  // Update existing style or add if not present
+  fontSize: 16,
+  fontWeight: '600',
+  color: '#2c3e50',
+  display: 'flex',
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: 8
 },
 });
 
