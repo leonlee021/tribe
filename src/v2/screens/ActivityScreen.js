@@ -74,11 +74,11 @@ const ActivityScreen = () => {
     };
 
     const fetchTasks = async () => {
-        const response = await authService.fetchWithSilentAuth(api => api.get('/v2/tasks'));
+        const response = await authService.fetchWithSilentAuth(api => api.get('/tasks'));
         if (response?.data) {
             const tasksWithReviewStatus = await Promise.all(
                 response.data
-                    .filter(task => task.status === 'open') // Filter tasks with status 'open'
+                    .filter(task => !task.deleted && (task.status === 'open' || task.status === 'offered'))
                     .map(async task => {
                         const { hasSubmittedReview } = task.status === 'completed' 
                             ? { hasSubmittedReview: await fetchHasSubmittedReview(task.id) }
@@ -311,62 +311,40 @@ const ActivityScreen = () => {
 
     const handleSubmitOffer = async (taskId, offerPrice, offerMessage) => {
         try {
-            // Input validation
-            if (!taskId || !offerPrice || !offerMessage) {
-                Alert.alert('Error', 'All fields are required');
-                return;
-            }
-    
-            // Ensure offerMessage is a string
-            const messageStr = String(offerMessage);
-            const price = Number(offerPrice);
-    
-            if (isNaN(price) || price <= 0) {
-                Alert.alert('Error', 'Please enter a valid price');
-                return;
-            }
-    
             const token = await AsyncStorage.getItem('userToken');
             if (!token) {
-                Alert.alert('Error', 'Not authenticated. Please log in again.');
+                Alert.alert('Error', 'You must be logged in to submit an offer.');
                 return;
             }
-    
-            const response = await api.post('/offers', {
-                taskId,
-                offerPrice: price,
-                offerMessage: messageStr,
-                isV2Task: true
-            }, {
-                headers: { 
-                    Authorization: `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+
+            const response = await api.post(
+                '/offers',
+                { 
+                    taskId, 
+                    offerPrice: parseFloat(offerPrice), // Ensure this is sent as a number
+                    offerMessage 
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
                 }
-            });
-            
+            );
+
             if (response.status === 201) {
-                await fetchTasks();
-                Alert.alert('Success', 'Your offer has been submitted!');
+                Alert.alert('Offer Submitted', 'Your offer has been submitted successfully.');
+                await fetchTasks(); // Refresh tasks to include the new offer
+            } else {
+                Alert.alert('Error', 'Failed to submit the offer.');
             }
         } catch (error) {
-            console.error('Error submitting offer:', {
-                message: error.message,
-                data: error.response?.data,
-                status: error.response?.status
-            });
-            
-            let errorMessage = 'Failed to submit offer.';
-            if (error.response?.data?.message) {
-                errorMessage = error.response.data.message;
-            }
-            
-            Alert.alert('Error', errorMessage);
+            console.error('Error submitting offer:', error.response || error.message);
+            Alert.alert('Error', 'Failed to submit the offer.');
         }
     };
 
-
     const renderItem = ({ item }) => {
-        if (item.status !== 'open') return null; 
+        if (item.status !== 'open' && item.status !== 'offered') return null; 
         const counts = getTaskNotificationCount(item.id);
         const isRequester = item.userId === user?.id;
         const notificationCount = isRequester 

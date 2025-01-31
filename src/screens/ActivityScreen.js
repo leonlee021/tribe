@@ -125,38 +125,41 @@ const ActivityScreen = () => {
       const fetchTasks = async () => {
         const response = await authService.fetchWithSilentAuth(async (api) => {
             return api.get('/tasks');
-          });
-      
+        });
+    
         if (response && response.data) {
-          // Fetch review status for each completed task
-          const tasksWithReviewStatus = await Promise.all(
-            response.data.map(async task => {
-              const { offerNotifications, acceptedNotifications, cancelledNotifications, completedNotifications } = 
-                getTaskNotificationCount(task.id);
-              
-              let hasSubmittedReview = false;
-              if (task.status === 'completed') {
-                hasSubmittedReview = await fetchHasSubmittedReview(task.id);
-              }
-              
-              return {
-                ...task,
-                hasSubmittedReview,
-                hasNotification: offerNotifications > 0 || 
-                                acceptedNotifications > 0 || 
-                                cancelledNotifications > 0 || 
-                                completedNotifications > 0
-              };
-            })
-          );
-      
-          const sortedTasks = tasksWithReviewStatus.sort((a, b) => b.hasNotification - a.hasNotification);
-          //console.log('Tasks fetched in ActivityScreen:', sortedTasks);
-          setTasks(sortedTasks);
+            // Filter out deleted tasks
+            const activeTasks = response.data.filter(task => !task.deleted);
+    
+            // Fetch review status for each completed task
+            const tasksWithReviewStatus = await Promise.all(
+                activeTasks.map(async task => {
+                    const { offerNotifications, acceptedNotifications, cancelledNotifications, completedNotifications } = 
+                        getTaskNotificationCount(task.id);
+    
+                    let hasSubmittedReview = false;
+                    if (task.status === 'completed') {
+                        hasSubmittedReview = await fetchHasSubmittedReview(task.id);
+                    }
+    
+                    return {
+                        ...task,
+                        hasSubmittedReview,
+                        hasNotification: offerNotifications > 0 || 
+                                        acceptedNotifications > 0 || 
+                                        cancelledNotifications > 0 || 
+                                        completedNotifications > 0
+                    };
+                })
+            );
+    
+            const sortedTasks = tasksWithReviewStatus.sort((a, b) => b.hasNotification - a.hasNotification);
+            //console.log('Tasks fetched in ActivityScreen:', sortedTasks);
+            setTasks(sortedTasks);
         } else {
-          setTasks([]);
+            setTasks([]);
         }
-      };
+    };
     
 
 

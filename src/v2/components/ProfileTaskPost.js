@@ -24,7 +24,7 @@ const ProfileTaskPost = ({
     notificationCount = 0,
     hasSubmittedReview = false,
     initialCollapsed = true,
-    onSubmitOffer = () => {},
+    onSubmitOffer,
     isTaskOwner,
     taskStatus,
 }) => {
@@ -130,7 +130,7 @@ const ProfileTaskPost = ({
         </View>
   
         <Text style={styles.description} numberOfLines={2}>
-          {task.description}
+          {task.postContent}
         </Text>
   
         <View style={styles.footer}>
@@ -142,14 +142,14 @@ const ProfileTaskPost = ({
         </TouchableOpacity>
         </View>
       {/* Accept button outside the main touchable */}
-      {!isTaskOwner && taskStatus === 'open' && (
+      {!isTaskOwner && (taskStatus === 'open' || taskStatus === 'offered') && (
         <View style={styles.buttonContainer}>
           {!userHasApplied ? (
             <TouchableOpacity 
               style={styles.acceptButton}
               onPress={() => setIsOfferModalVisible(true)}
             >
-              <Text style={styles.acceptButtonText}>Accept</Text>
+              <Text style={styles.acceptButtonText}>Apply</Text>
             </TouchableOpacity>
           ) : (
             <Text style={styles.appliedText}>Applied</Text>

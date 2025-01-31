@@ -22,8 +22,8 @@ const ExpandableTaskPost = ({
   isExpanded,
   setIsExpanded,
   onSubmitOffer,
-  isTaskOwner,
   taskStatus,
+  isTaskOwner
 }) => {
 
   const [review, setReview] = useState('');
@@ -32,7 +32,7 @@ const ExpandableTaskPost = ({
   const [isOfferModalVisible, setIsOfferModalVisible] = useState(false);
   const navigation = useNavigation();
 
-  //const isTaskOwner = String(task.userId) === String(loggedInUserId);
+  // const isTaskOwner = String(task.userId) === String(loggedInUserId);
   const isTaskCancelled = task.cancellations?.length > 0;
   const formattedDate = formatDate(task.createdAt);
 
@@ -52,7 +52,7 @@ const ExpandableTaskPost = ({
   };
 
   const renderApplySection = () => {
-    if (isTaskOwner || taskStatus !== 'open') return null;
+    if (isTaskOwner || (taskStatus !== 'open' && taskStatus !== 'offered')) return null;
     
     return (
         <>
@@ -61,7 +61,7 @@ const ExpandableTaskPost = ({
                     style={styles.applyButton}
                     onPress={() => setIsOfferModalVisible(true)}
                 >
-                    <Text style={styles.applyButtonText}>Accept Task</Text>
+                    <Text style={styles.applyButtonText}>Apply Task</Text>
                 </TouchableOpacity>
             ) : (
                 <Text style={styles.appliedText}>You've already applied</Text>
@@ -124,7 +124,7 @@ const ExpandableTaskPost = ({
       </View>
 
       <Text style={styles.description} numberOfLines={2}>
-        {task.description}
+        {task.postContent}
       </Text>  
 
       <View style={styles.footer}>
@@ -177,11 +177,74 @@ const ExpandableTaskPost = ({
             </TouchableOpacity>
           </View>
 
-          <Text style={styles.modalDescription}>{task.description}</Text>
+          <Text style={styles.modalDescription}>{task.postContent}</Text>
+
+
+          {(task.status === 'active' || task.status === 'completed') && task.taskerAcceptedId && task.tasker && (
+            <View style={styles.taskerContainer}>
+              <Text style={styles.taskerAssignedText}>Assigned to</Text>
+              <TouchableOpacity 
+                onPress={() => onViewProfile(task.taskerAcceptedId)}
+                style={styles.taskerProfileContainer}
+              >
+                {task.tasker.profilePhotoUrl ? (
+                  <Image source={{ uri: task.tasker.profilePhotoUrl }} style={styles.taskerProfilePhoto} />
+                ) : (
+                  <Icon name="user-circle" size={50} color="#e1e1e1" />
+                )}
+                <Text style={styles.taskerName}>
+                  {`${task.tasker.firstName} ${task.tasker.lastName}`}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Add offers section */}
+          {isTaskOwner && task.offers && task.offers.length > 0 && (
+            <View style={styles.offersContainer}>
+              <Text style={styles.sectionTitle}>Offers</Text>
+              {task.offers.map((offer) => (
+                <View key={offer.id} style={styles.offerItem}>
+                  <TouchableOpacity onPress={() => onViewProfile(offer.tasker?.id)} style={styles.offerHeader}>
+                    {offer.tasker?.profilePhotoUrl ? (
+                      <Image source={{ uri: offer.tasker.profilePhotoUrl }} style={styles.offerProfilePhoto} />
+                    ) : (
+                      <Icon name="user-circle" size={50} color="#e1e1e1" />
+                    )}
+                    <View style={styles.offerTaskerInfo}>
+                      <Text style={styles.offerTaskerName}>{`${offer.tasker.firstName} ${offer.tasker.lastName}`}</Text>
+                      <View style={styles.ratingContainer}>
+                        <Icon name="star" size={14} color="#FFD700" />
+                        <Text style={styles.averageRating}>
+                          {offer.tasker.averageRating ? offer.tasker.averageRating.toFixed(1) : 'N/A'}
+                        </Text>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                  <Text style={styles.offerPrice}>${parseFloat(offer.offerPrice).toFixed(2)}</Text>
+                  <Text style={styles.offerMessage}>{offer.offerMessage || 'No message provided.'}</Text>
+                  {offer.status === 'accepted' && (
+                    <Text style={styles.acceptedLabel}>Offer Accepted</Text>
+                  )}
+                  {offer.status === 'cancelled' && (
+                    <Text style={styles.cancelledLabel}>Offer Cancelled</Text>
+                  )}
+                  {offer.status !== 'accepted' && offer.status !== 'cancelled' && task.status !== 'active' && (
+                    <TouchableOpacity
+                      style={styles.acceptOfferButton}
+                      onPress={() => onAcceptOffer(offer.id)}
+                    >
+                      <Text style={styles.acceptOfferButtonText}>Accept Offer</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              ))}
+            </View>
+          )}
 
           {/* Action Buttons */}
           <View style={styles.actionButtons}>
-            {!isTaskOwner && taskStatus === 'open' && renderApplySection()}
+            {!isTaskOwner && (taskStatus === 'open' || taskStatus === 'offered') && renderApplySection()}
             {task.status === 'active' && isTaskOwner && (
               <TouchableOpacity 
                 style={[styles.actionButton, styles.completeButton]}
@@ -477,6 +540,90 @@ appliedText: {
     color: '#28a745',
     marginVertical: 10,
     fontWeight: '600'
+},
+taskerContainer: {
+  marginTop: 15,
+  padding: 10,
+  backgroundColor: '#f8f9fa',
+  borderRadius: 8,
+},
+taskerAssignedText: {
+  fontSize: 14,
+  color: '#666',
+  marginBottom: 8,
+},
+taskerProfileContainer: {
+  flexDirection: 'row',
+  alignItems: 'center',
+},
+taskerProfilePhoto: {
+  width: 40,
+  height: 40,
+  borderRadius: 20,
+  marginRight: 10,
+},
+taskerName: {
+  fontSize: 16,
+  fontWeight: '500',
+  color: '#333',
+},
+offerItem: {
+  backgroundColor: '#f8f9fa',
+  borderRadius: 8,
+  padding: 12,
+  marginBottom: 10,
+},
+offerHeader: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  marginBottom: 8,
+},
+offerProfilePhoto: {
+  width: 40,
+  height: 40,
+  borderRadius: 20,
+  marginRight: 10,
+},
+offerTaskerInfo: {
+  flex: 1,
+},
+offerTaskerName: {
+  fontSize: 16,
+  fontWeight: '500',
+},
+averageRating: {
+  marginLeft: 5,
+  color: '#666',
+},
+offerPrice: {
+  fontSize: 16,
+  fontWeight: '600',
+  color: '#28a745',
+  marginVertical: 8,
+},
+offerMessage: {
+  fontSize: 14,
+  color: '#666',
+  marginBottom: 8,
+},
+acceptedLabel: {
+  color: '#28a745',
+  fontWeight: '500',
+},
+cancelledLabel: {
+  color: '#dc3545',
+  fontWeight: '500',
+},
+acceptOfferButton: {
+  backgroundColor: '#3717ce',
+  padding: 8,
+  borderRadius: 8,
+  alignItems: 'center',
+  marginTop: 8,
+},
+acceptOfferButtonText: {
+  color: '#fff',
+  fontWeight: '500',
 },
 });
 

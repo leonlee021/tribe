@@ -78,8 +78,8 @@ const ProfileScreen = ({ navigation }) => {
     // console.log('Fetching tasks for user:', userIdParam);
   
     const [requestedResponse, taskerResponse, cancellationsResponse] = await Promise.all([
-        authService.fetchWithSilentAuth(() => api.get(`/v2/tasks/user/${userIdParam}`)),
-        authService.fetchWithSilentAuth(() => api.get(`/v2/tasks/tasker/${userIdParam}`)),
+        authService.fetchWithSilentAuth(() => api.get(`/tasks/user/${userIdParam}`)),
+        authService.fetchWithSilentAuth(() => api.get(`/tasks/tasker/${userIdParam}`)),
         authService.fetchWithSilentAuth(() => api.get(`/cancellations/tasker/${userIdParam}`))
     ]);
 
@@ -265,6 +265,7 @@ const ProfileScreen = ({ navigation }) => {
             onViewProfile={(userId) => handleViewProfile(userId)}
             onAcceptOffer={(offerId) => handleAcceptOffer(offerId)}
             onDeleteTask={(taskId) => handleDeleteTask(taskId)}
+            isTaskOwner={true}
           />
         ))
       ) : (
@@ -291,6 +292,7 @@ const ProfileScreen = ({ navigation }) => {
             onViewProfile={(userId) => handleViewProfile(userId)}
             onAcceptOffer={(offerId) => handleAcceptOffer(offerId)}
             onDeleteTask={(taskId) => handleDeleteTask(taskId)}
+            isTaskOwner={false}
           />
         ))
       ) : (
@@ -374,6 +376,47 @@ const logToken = async () => {
       { cancelable: true }
     );
   };
+
+  const handleViewChat = (chatId, taskId) => {
+    navigation.navigate('ChatDetailScreen', { chatId });
+  };
+
+  const handleViewProfile = (userId) => {
+    navigation.navigate('ProfileScreen', { userId });
+};
+
+const handleAcceptOffer = async (offerId) => {
+    console.log('Accepting offer:', offerId);
+    try {
+        const token = await AsyncStorage.getItem('userToken');
+        if (!token) {
+            Alert.alert('Error', 'You must be logged in to accept an offer.');
+            return;
+        }
+
+        const response = await api.post(
+            `/offers/accept/${offerId}`, 
+            {}, 
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+        console.log('Offer acceptance response:', response.data);
+
+        if (response.status === 200) {
+            Alert.alert('Offer Accepted', 'You have accepted the offer.');
+            //await fetchTasks(); // Refresh tasks to reflect changes
+            // Navigate to the ChatDetailScreen if needed
+        } else {
+            Alert.alert('Error', 'Failed to accept the offer.');
+        }
+    } catch (error) {
+        console.error('Error accepting offer:', error.response || error.message);
+        Alert.alert('Error', 'Failed to accept the offer.');
+    }
+};
 
   if (!displayedUser) {
     return (

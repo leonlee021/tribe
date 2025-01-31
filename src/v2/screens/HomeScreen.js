@@ -66,12 +66,11 @@ const HomeScreen = () => {
                 return;
             }
 
-            console.log('Making request to:', '/v2/tasks');
             console.log('With data:', { description: description.trim() });
             console.log('With token:', token)
 
             const response = await authService.fetchWithSilentAuth(api => 
-                api.post('/v2/tasks', {
+                api.post('/tasks', {
                     description: description.trim()
                 })
             );
