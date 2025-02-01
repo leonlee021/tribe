@@ -325,8 +325,8 @@ const ExpandableTaskPost = ({
 
           <Text style={styles.modalDescription}>{task.postContent}</Text>
 
-
-          {(task.status === 'active' || task.status === 'completed') && task.taskerAcceptedId && task.tasker && (
+          {(task.status === 'active' || task.status === 'completed') && task.taskerAcceptedId && task.tasker &&
+          (isTaskOwner || String(loggedInUserId) === String(task.taskerAcceptedId)) && (
             <View style={styles.taskerContainer}>
               <Text style={styles.taskerAssignedText}>Assigned to</Text>
               <TouchableOpacity 
@@ -416,7 +416,8 @@ const ExpandableTaskPost = ({
               </TouchableOpacity>
             )}
 
-            {(task.status === 'active' || task.status === 'completed') && (
+            {(task.status === 'active' || task.status === 'completed') && 
+            (isTaskOwner || String(loggedInUserId) === String(task.taskerAcceptedId)) && (
               <TouchableOpacity 
                 style={[styles.actionButton, styles.chatButton]}
                 onPress={() => onViewChat(task.chatId)}
@@ -426,7 +427,8 @@ const ExpandableTaskPost = ({
               </TouchableOpacity>
             )}
 
-            {task.status === 'active' && (
+            {task.status === 'active' && 
+            (isTaskOwner || String(loggedInUserId) === String(task.taskerAcceptedId)) && (
               <TouchableOpacity 
                 style={[styles.actionButton, styles.cancelButton]}
                 onPress={() => onCancelTask(task.chatId)}
@@ -483,36 +485,6 @@ const ExpandableTaskPost = ({
                 )}
               </View>
             )}
-          {/* {task.status === 'completed' && !hasSubmittedReview && (
-            <View style={styles.reviewSection}>
-              <Text style={styles.reviewTitle}>Leave a Review</Text>
-              <TextInput
-                style={styles.reviewInput}
-                placeholder="Write your review..."
-                value={review}
-                onChangeText={setReview}
-                multiline
-              />
-              <View style={styles.ratingContainer}>
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <TouchableOpacity 
-                    key={star} 
-                    onPress={() => setRating(star)}
-                  >
-                    <Text style={styles.star}>
-                      {star <= rating ? '★' : '☆'}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-              <TouchableOpacity 
-                style={styles.submitButton}
-                onPress={submitReview}
-              >
-                <Text style={styles.submitButtonText} >Submit Review</Text>
-              </TouchableOpacity>
-            </View>
-          )} */}
         </ScrollView>
       </View>
     </Modal>

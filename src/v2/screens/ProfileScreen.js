@@ -254,7 +254,7 @@ const ProfileScreen = ({ navigation }) => {
           <ProfileTaskPost
             key={task.id}
             task={task}
-            loggedInUserId={displayedUser.id}
+            loggedInUserId={user.id}
             showUserName={false}
             onHide={handleHideTask} 
             isOwnProfile={isOwnProfile}
@@ -265,7 +265,7 @@ const ProfileScreen = ({ navigation }) => {
             onViewProfile={(userId) => handleViewProfile(userId)}
             onAcceptOffer={(offerId) => handleAcceptOffer(offerId)}
             onDeleteTask={(taskId) => handleDeleteTask(taskId)}
-            isTaskOwner={true}
+            isTaskOwner={task.userId === user.id} 
             onLeaveReview={(taskId) => handleLeaveReview(taskId)}
           />
         ))
@@ -282,7 +282,7 @@ const ProfileScreen = ({ navigation }) => {
           <ProfileTaskPost
             key={task.id}
             task={task}
-            loggedInUserId={displayedUser.id}
+            loggedInUserId={user.id}
             showUserName={false}
             onHide={handleHideTask} 
             isOwnProfile={isOwnProfile}
@@ -293,7 +293,7 @@ const ProfileScreen = ({ navigation }) => {
             onViewProfile={(userId) => handleViewProfile(userId)}
             onAcceptOffer={(offerId) => handleAcceptOffer(offerId)}
             onDeleteTask={(taskId) => handleDeleteTask(taskId)}
-            isTaskOwner={false}
+            isTaskOwner={task.userId === user.id} 
             onLeaveReview={(taskId) => handleLeaveReview(taskId)}
           />
         ))
