@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect  } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, Modal, Image, 
   ScrollView, TextInput, Alert, Dimensions
@@ -6,6 +6,8 @@ import {
 import Icon from 'react-native-vector-icons/FontAwesome';
 import OfferModal from '../../components/OfferModal';
 import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import api from '../../services/api';
 
 const ExpandableTaskPost = ({
   task,
@@ -32,14 +34,51 @@ const ExpandableTaskPost = ({
   const [isOfferModalVisible, setIsOfferModalVisible] = useState(false);
   const navigation = useNavigation();
   const [showOffers, setShowOffers] = useState(false);
+  const [localHasSubmittedReview, setLocalHasSubmittedReview] = useState(hasSubmittedReview);
+
+  const reviews = task.activeChat?.reviews || [];
+  const requesterReview = reviews.find(review => review.reviewerId === task.userId);
+  const taskerReview = reviews.find(review => review.reviewerId === task.taskerAcceptedId);
+
+  const canSubmitReview = task.status === 'completed' && 
+    ((isTaskOwner && !requesterReview) || (!isTaskOwner && !taskerReview));
 
   // const isTaskOwner = String(task.userId) === String(loggedInUserId);
   const isTaskCancelled = task.cancellations?.length > 0;
   const formattedDate = formatDate(task.createdAt);
 
+  // Find the user's review if it exists
+  const userReview = task.activeChat?.reviews?.find(review => 
+    String(review.reviewerId) === String(loggedInUserId)
+  );
+
+  useEffect(() => {
+    setLocalHasSubmittedReview(hasSubmittedReview);
+    if (hasSubmittedReview && task.status === 'completed') {
+      fetchSubmittedReview();
+    }
+  }, [hasSubmittedReview]);
+
   const userHasApplied = task.offers?.some(offer => 
     String(offer.taskerId) === String(loggedInUserId)
   );
+
+  const fetchSubmittedReview = async () => {
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) throw new Error('User token not found');
+
+      const response = await api.get(`/reviews/${task.chatId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      
+      setSubmittedReview(response.data);
+    } catch (error) {
+      console.error('Error fetching review:', error);
+    }
+  };
 
   const handleMarkComplete = () => {
     Alert.alert(
@@ -50,6 +89,120 @@ const ExpandableTaskPost = ({
         { text: 'Complete', onPress: () => onMarkComplete(task.chatId) }
       ]
     );
+  };
+
+  const renderReview = (review, reviewer) => {
+    if (!review) return null;
+  
+    return (
+      <View style={styles.submittedReviewContainer}>
+        <View style={styles.reviewHeader}>
+          <View style={styles.reviewerInfo}>
+            <Icon name="user" size={24} color="#666" />
+            <Text style={styles.reviewerType}>
+              {reviewer === 'requester' ? 'Requester' : 'Tasker'}
+            </Text>
+          </View>
+          <Text style={styles.reviewDate}>
+            {formatDate(review.createdAt)}
+          </Text>
+        </View>
+  
+        <View style={styles.submittedRating}>
+          {[...Array(5)].map((_, index) => (
+            <Text 
+              key={index} 
+              style={[styles.star, { color: index < review.rating ? '#FFD700' : '#D3D3D3' }]}
+            >
+              ★
+            </Text>
+          ))}
+        </View>
+  
+        <Text style={styles.submittedReviewText}>
+          {review.review}
+        </Text>
+      </View>
+    );
+  };
+
+  // Inside the Review Section of the expanded content
+  const reviewSection = (
+    <View style={styles.reviewSection}>
+      <Text style={styles.reviewSectionTitle}>Reviews</Text>
+      
+      {/* Display existing reviews */}
+      {(requesterReview || taskerReview) && (
+        <View style={styles.existingReviews}>
+          {renderReview(requesterReview, 'requester')}
+          {renderReview(taskerReview, 'tasker')}
+        </View>
+      )}
+
+      {/* Review submission form */}
+      {canSubmitReview && (
+        <View style={styles.reviewForm}>
+          <Text style={styles.reviewTitle}>Leave a Review</Text>
+          <TextInput
+            style={styles.reviewInput}
+            placeholder="Write your review..."
+            value={review}
+            onChangeText={setReview}
+            multiline
+          />
+          <View style={styles.ratingContainer}>
+            {[1, 2, 3, 4, 5].map((star) => (
+              <TouchableOpacity 
+                key={star} 
+                onPress={() => setRating(star)}
+              >
+                <Text style={[styles.star, { color: star <= rating ? '#FFD700' : '#D3D3D3' }]}>
+                  ★
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          <TouchableOpacity 
+            style={styles.submitButton}
+            onPress={submitReview}
+          >
+            <Text style={styles.submitButtonText}>Submit Review</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+    </View>
+  );
+
+  // Modified submitReview function
+  const submitReview = async () => {
+    if (rating > 0 && review.trim()) {
+      try {
+        const token = await AsyncStorage.getItem('userToken');
+        if (!token) throw new Error('User token not found');
+
+        const reviewData = {
+          chatId: task.chatId,
+          rating,
+          review: review.trim(),
+          reviewerId: loggedInUserId,
+          reviewedUserId: isTaskOwner ? task.taskerAcceptedId : task.userId
+        };
+
+        await api.post('/reviews', reviewData, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        Alert.alert('Review Submitted', 'Your review has been successfully submitted.');
+        setLocalHasSubmittedReview(true);
+        setReview('');
+        setRating(0);
+      } catch (error) {
+        console.error('Error submitting review:', error);
+        Alert.alert('Error', 'Failed to submit review.');
+      }
+    } else {
+      Alert.alert('Invalid Input', 'Please provide both a rating and a review.');
+    }
   };
 
   const renderApplySection = () => {
@@ -80,14 +233,6 @@ const ExpandableTaskPost = ({
         </>
     );
 };
-
-  const submitReview = () => {
-    if (rating === 0 || !review.trim()) {
-      Alert.alert('Invalid Input', 'Please provide both a rating and a review.');
-      return;
-    }
-    // Call your review submission handler here
-  };
 
   const renderStatusBadge = (status) => {
     const statusColors = {
@@ -292,7 +437,53 @@ const ExpandableTaskPost = ({
           </View>
 
           {/* Review Section */}
-          {task.status === 'completed' && !hasSubmittedReview && (
+            {/* Reviews Section */}
+            {task.status === 'completed' && (
+              <View style={styles.reviewSection}>
+                <Text style={styles.reviewSectionTitle}>Reviews</Text>
+                
+                {/* Display existing reviews */}
+                {(requesterReview || taskerReview) && (
+                  <View style={styles.existingReviews}>
+                    {renderReview(requesterReview, 'requester')}
+                    {renderReview(taskerReview, 'tasker')}
+                  </View>
+                )}
+
+                {/* Review submission form */}
+                {canSubmitReview && (
+                  <View style={styles.reviewForm}>
+                    <Text style={styles.reviewTitle}>Leave a Review</Text>
+                    <TextInput
+                      style={styles.reviewInput}
+                      placeholder="Write your review..."
+                      value={review}
+                      onChangeText={setReview}
+                      multiline
+                    />
+                    <View style={styles.ratingContainer}>
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <TouchableOpacity 
+                          key={star} 
+                          onPress={() => setRating(star)}
+                        >
+                          <Text style={[styles.star, { color: star <= rating ? '#FFD700' : '#D3D3D3' }]}>
+                            ★
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                    <TouchableOpacity 
+                      style={styles.submitButton}
+                      onPress={submitReview}
+                    >
+                      <Text style={styles.submitButtonText}>Submit Review</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+            )}
+          {/* {task.status === 'completed' && !hasSubmittedReview && (
             <View style={styles.reviewSection}>
               <Text style={styles.reviewTitle}>Leave a Review</Text>
               <TextInput
@@ -318,10 +509,10 @@ const ExpandableTaskPost = ({
                 style={styles.submitButton}
                 onPress={submitReview}
               >
-                <Text style={styles.submitButtonText}>Submit Review</Text>
+                <Text style={styles.submitButtonText} >Submit Review</Text>
               </TouchableOpacity>
             </View>
-          )}
+          )} */}
         </ScrollView>
       </View>
     </Modal>
@@ -670,6 +861,61 @@ sectionTitle: {  // Update existing style or add if not present
   flexDirection: 'row',
   alignItems: 'center',
   gap: 8
+},
+reviewSection: {
+  padding: 15,
+  backgroundColor: '#fff',
+  borderRadius: 8,
+  marginTop: 15,
+},
+reviewSectionTitle: {
+  fontSize: 18,
+  fontWeight: '600',
+  marginBottom: 15,
+},
+existingReviews: {
+  gap: 15,
+},
+submittedReviewContainer: {
+  backgroundColor: '#f8f9fa',
+  padding: 15,
+  borderRadius: 8,
+  marginBottom: 10,
+},
+reviewHeader: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  marginBottom: 10,
+},
+reviewerInfo: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: 8,
+},
+reviewerType: {
+  fontSize: 14,
+  color: '#666',
+},
+reviewDate: {
+  fontSize: 12,
+  color: '#666',
+},
+submittedRating: {
+  flexDirection: 'row', // Keep stars horizontal
+  alignItems: 'center',
+  marginVertical: 8,
+  gap: 2, // Small gap between stars
+},
+ratingContainer: {
+  flexDirection: 'row', // Keep stars horizontal
+  alignItems: 'center',
+  marginVertical: 10,
+  gap: 2, // Small gap between stars
+},
+star: {
+  fontSize: 20,
+  color: '#D3D3D3', // Default color for empty stars
 },
 });
 

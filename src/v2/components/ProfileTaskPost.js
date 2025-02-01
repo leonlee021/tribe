@@ -27,6 +27,7 @@ const ProfileTaskPost = ({
     onSubmitOffer,
     isTaskOwner,
     taskStatus,
+    onLeaveReview
 }) => {
     const [isExpanded, setIsExpanded] = useState(!initialCollapsed);
     const navigation = useNavigation();
@@ -104,6 +105,7 @@ const ProfileTaskPost = ({
         onSubmitOffer={onSubmitOffer}
         isTaskOwner={isTaskOwner}
         taskStatus={taskStatus}
+        onLeaveReview={onLeaveReview}
       />
     );
   }

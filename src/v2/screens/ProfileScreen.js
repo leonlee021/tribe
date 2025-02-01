@@ -259,13 +259,14 @@ const ProfileScreen = ({ navigation }) => {
             onHide={handleHideTask} 
             isOwnProfile={isOwnProfile}
             profileUser={displayedUser}
-            onMarkComplete={(chatId) => handleMarkComplete(chatId)}
+            onMarkComplete={(chatId) => handleCompleteTask(chatId)}
             onCancelTask={(chatId) => handleCancelTask(chatId)}
             onViewChat={(chatId) => handleViewChat(chatId)}
             onViewProfile={(userId) => handleViewProfile(userId)}
             onAcceptOffer={(offerId) => handleAcceptOffer(offerId)}
             onDeleteTask={(taskId) => handleDeleteTask(taskId)}
             isTaskOwner={true}
+            onLeaveReview={(taskId) => handleLeaveReview(taskId)}
           />
         ))
       ) : (
@@ -286,13 +287,14 @@ const ProfileScreen = ({ navigation }) => {
             onHide={handleHideTask} 
             isOwnProfile={isOwnProfile}
             profileUser={displayedUser}
-            onMarkComplete={(chatId) => handleMarkComplete(chatId)}
+            onMarkComplete={(chatId) => handleCompleteTask(chatId)}
             onCancelTask={(chatId) => handleCancelTask(chatId)}
             onViewChat={(chatId) => handleViewChat(chatId)}
             onViewProfile={(userId) => handleViewProfile(userId)}
             onAcceptOffer={(offerId) => handleAcceptOffer(offerId)}
             onDeleteTask={(taskId) => handleDeleteTask(taskId)}
             isTaskOwner={false}
+            onLeaveReview={(taskId) => handleLeaveReview(taskId)}
           />
         ))
       ) : (
@@ -415,6 +417,36 @@ const handleAcceptOffer = async (offerId) => {
     } catch (error) {
         console.error('Error accepting offer:', error.response || error.message);
         Alert.alert('Error', 'Failed to accept the offer.');
+    }
+};
+
+const handleCompleteTask = async (chatId) => {
+    try {
+        const token = await AsyncStorage.getItem('userToken');
+        if (!token) throw new Error('User token not found');
+
+        const response = await api.post(
+            `/chats/complete`, 
+            { chatId }, 
+            {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            }
+        );
+
+        if (response.status === 200) {
+            // setChatDetails(prevDetails => ({ ...prevDetails, status: 'completed' }));
+            Alert.alert('Task Completed', 'You have marked the task as completed.');
+        }
+    } catch (error) {
+        if (error.response) {
+            console.error('Error completing task:', error.response.data);
+            Alert.alert('Error', error.response.data.error || 'Failed to complete the task.');
+        } else {
+            console.error('Error completing task:', error.message);
+            Alert.alert('Error', 'Failed to complete the task.');
+        }
     }
 };
 
