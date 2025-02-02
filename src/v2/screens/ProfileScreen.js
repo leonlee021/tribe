@@ -380,7 +380,7 @@ const logToken = async () => {
   };
 
   const handleViewChat = (chatId, taskId) => {
-    navigation.navigate('ChatDetailScreen', { chatId });
+    navigation.navigate('ChatDetailScreen', { chatId, onBack: () => navigation.goBack() });
   };
 
   const handleViewProfile = (userId) => {

@@ -8,6 +8,7 @@ import OfferModal from '../../components/OfferModal';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../../services/api';
+import ChatDetailScreen from '@/screens/ChatDetailScreen';
 
 const ExpandableTaskPost = ({
   task,
@@ -35,6 +36,7 @@ const ExpandableTaskPost = ({
   const navigation = useNavigation();
   const [showOffers, setShowOffers] = useState(false);
   const [localHasSubmittedReview, setLocalHasSubmittedReview] = useState(hasSubmittedReview);
+  const [isInChat, setIsInChat] = useState(false);
 
   const reviews = task.activeChat?.reviews || [];
   const requesterReview = reviews.find(review => review.reviewerId === task.userId);
@@ -51,6 +53,20 @@ const ExpandableTaskPost = ({
   const userReview = task.activeChat?.reviews?.find(review => 
     String(review.reviewerId) === String(loggedInUserId)
   );
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('beforeRemove', (e) => {
+      if (isInChat) {
+        // Prevent default behavior
+        e.preventDefault();
+        // Go back to task post instead
+        setIsInChat(false);
+        return;
+      }
+    });
+
+    return unsubscribe;
+  }, [navigation, isInChat]);
 
   useEffect(() => {
     setLocalHasSubmittedReview(hasSubmittedReview);
@@ -89,6 +105,10 @@ const ExpandableTaskPost = ({
         { text: 'Complete', onPress: () => onMarkComplete(task.chatId) }
       ]
     );
+  };
+
+  const handleChatPress = () => {
+    setIsInChat(true); // Just switch to chat view within the same modal
   };
 
   const renderReview = (review, reviewer) => {
@@ -290,6 +310,7 @@ const ExpandableTaskPost = ({
       onRequestClose={() => setIsExpanded(false)}
     >
       <View style={styles.modalContainer}>
+      {!isInChat ? (
         <ScrollView style={styles.modalContent}>
           <View style={styles.modalHeader}>
             <TouchableOpacity 
@@ -420,7 +441,7 @@ const ExpandableTaskPost = ({
             (isTaskOwner || String(loggedInUserId) === String(task.taskerAcceptedId)) && (
               <TouchableOpacity 
                 style={[styles.actionButton, styles.chatButton]}
-                onPress={() => onViewChat(task.chatId)}
+                onPress={handleChatPress}
               >
                 <Icon name="comments" size={20} color="#fff" />
                 <Text style={styles.buttonText}> Chat</Text>
@@ -486,6 +507,14 @@ const ExpandableTaskPost = ({
               </View>
             )}
         </ScrollView>
+      ) : 
+        <View style={styles.modalContent}>
+        <ChatDetailScreen 
+          chatId={task.chatId} 
+          onBack={() => setIsInChat(false)}
+        />
+      </View>
+      }
       </View>
     </Modal>
   );
@@ -889,6 +918,9 @@ star: {
   fontSize: 20,
   color: '#D3D3D3', // Default color for empty stars
 },
+chatMode: {
+  backgroundColor: '#fff', // Remove the modal background when in chat
+}
 });
 
 export default ExpandableTaskPost;

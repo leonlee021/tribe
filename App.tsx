@@ -122,10 +122,14 @@ export default function App() {
             component={ChatScreen} 
             options={{ headerShown: false }}
           />
-          <Stack.Screen name = 'ChatDetailScreen' component={ChatDetailScreen} 
-              options = {{
+          <Stack.Screen 
+            name='ChatDetailScreen' 
+            component={ChatDetailScreen} 
+            options={{
               headerShown: false,
-              }}
+              presentation: 'card', // Change from 'modal' to 'card'
+              cardStyle: { backgroundColor: 'white' }
+            }}
           />
           <Stack.Screen name = 'ProfileScreen' component={ProfileScreen} 
               options = {{

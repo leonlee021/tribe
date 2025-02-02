@@ -17,7 +17,7 @@ const ProfileTaskPost = ({
     onHide = () => {},
     onMarkComplete = () => {},
     onCancelTask = () => {},
-    onViewChat = () => {},
+    onViewChat,
     onViewProfile = () => {},
     onAcceptOffer = () => {},
     onDeleteTask = () => {},

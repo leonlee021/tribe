@@ -10,10 +10,10 @@ import api from '../services/api';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { UserContext } from '../contexts/UserContext';
 
-const ChatDetailScreen = () => {
+const ChatDetailScreen = ({ chatId, onBack }) => {
     const route = useRoute();
     const navigation = useNavigation();
-    const { chatId, chatWith, chatWithId } = route.params || {};
+    const { fromTaskPost, chatWithId } = route.params || {};
     const { user } = useContext(UserContext); // Consume UserContext to get the authenticated user
 
     const [chatWithName, setChatWithName] = useState('');
@@ -31,9 +31,18 @@ const ChatDetailScreen = () => {
     const [cancellationReason, setCancellationReason] = useState('');
     const [offers, setOffers] = useState([]); // To manage offers
     const flatListRef = useRef(null);
+    const activeChatId = chatId || route.params?.chatId;
 
 
     const { fetchUserProfile } = useContext(UserContext);
+
+    const handleBack = () => {
+        if (onBack) {
+          onBack();
+        } else {
+          navigation.goBack();
+        }
+      };
 
     useEffect(() => {
         if (!chatId) {
@@ -150,7 +159,6 @@ const ChatDetailScreen = () => {
             }
         }
     };
-
 
     const handleCompleteTask = async () => {
         try {
@@ -285,7 +293,7 @@ const ChatDetailScreen = () => {
             <SafeAreaView style={styles.container}>
                 <View style={styles.header}>
                     {/* Back Button */}
-                    <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+                    <TouchableOpacity style={styles.backButton} onPress={handleBack}>
                         <Icon name="arrow-left" size={24} color="#fff" />
                     </TouchableOpacity>
 
@@ -296,12 +304,12 @@ const ChatDetailScreen = () => {
                     </View>
 
                     {/* View Profile Button */}
-                    <TouchableOpacity style={styles.viewProfileButton} onPress={handleViewProfile}>
+                    {/* <TouchableOpacity style={styles.viewProfileButton} onPress={handleViewProfile}>
                         <Text style={styles.viewProfileButtonText}>View Profile</Text>
-                    </TouchableOpacity>
+                    </TouchableOpacity> */}
                 </View>
 
-                {chatDetails && chatDetails.status === 'active' && (
+                {/* {chatDetails && chatDetails.status === 'active' && (
                     <>
                         {isRequester ? (
                             <View style={styles.taskActionContainer}>
@@ -309,7 +317,6 @@ const ChatDetailScreen = () => {
                                 <TouchableOpacity style={styles.completeButton} onPress={handleCompleteTask}>
                                     <Text style={styles.buttonText}>Mark Task as Completed</Text>
                                 </TouchableOpacity>
-                                {/* Add the Cancel Task button for the requester */}
                                 <TouchableOpacity style={styles.cancelButton} onPress={handleCancelTask}>
                                     <Text style={styles.buttonText}>Cancel Task</Text>
                                 </TouchableOpacity>
@@ -318,21 +325,20 @@ const ChatDetailScreen = () => {
                             <View style={styles.taskActionContainer}>
                                 <Text style={styles.actionText}>The task is currently active.</Text>
                                 <Text style={styles.actionSubText}>{chatWithName} has not marked the task as completed yet.</Text>
-                                {/* Add the Cancel Task button for the tasker */}
                                 <TouchableOpacity style={styles.cancelButton} onPress={handleCancelTask}>
                                     <Text style={styles.buttonText}>Cancel Task</Text>
                                 </TouchableOpacity>
                             </View>
                         )}
                     </>
-                )}
-                {chatDetails && chatDetails.status === 'pending' && (
+                )} */}
+                {/* {chatDetails && chatDetails.status === 'pending' && (
                 <View style={styles.taskActionContainer}>
                     <Text style={styles.actionText}>This offer has been cancelled.</Text>
                 </View>
-                )}
+                )} */}
 
-                {chatDetails && chatDetails.status === 'completed' && !hasSubmittedReview &&  (
+                {/* {chatDetails && chatDetails.status === 'completed' && !hasSubmittedReview &&  (
                     <View style={styles.reviewContainer}>
                         <Text style={styles.reviewTitle}>Leave a Review</Text>
                         <TextInput
@@ -355,7 +361,7 @@ const ChatDetailScreen = () => {
                             <Text style={styles.submitButtonText}>Submit Review</Text>
                         </TouchableOpacity>
                     </View>
-                )}
+                )} */}
 
             <KeyboardAvoidingView
                 style={styles.keyboardAvoidingView}
