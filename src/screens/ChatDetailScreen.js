@@ -160,283 +160,91 @@ const ChatDetailScreen = ({ chatId, onBack }) => {
         }
     };
 
-    const handleCompleteTask = async () => {
-        try {
-            const token = await AsyncStorage.getItem('userToken');
-            if (!token) throw new Error('User token not found');
-
-            const response = await api.post(
-                `/chats/complete`, 
-                { chatId }, 
-                {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                }
-            );
-
-            if (response.status === 200) {
-                setChatDetails(prevDetails => ({ ...prevDetails, status: 'completed' }));
-                Alert.alert('Task Completed', 'You have marked the task as completed.');
-            }
-        } catch (error) {
-            if (error.response) {
-                console.error('Error completing task:', error.response.data);
-                Alert.alert('Error', error.response.data.error || 'Failed to complete the task.');
-            } else {
-                console.error('Error completing task:', error.message);
-                Alert.alert('Error', 'Failed to complete the task.');
-            }
-        }
-    };
-
-    const handleCancelTask = () => {
-        setIsReasonModalVisible(true);
-    };
-    
-    // Function to confirm and process the cancellation
-    const confirmCancelTask = async () => {
-        try {
-            const token = await AsyncStorage.getItem('userToken');
-            if (!token) throw new Error('User token not found');
-    
-            const response = await api.post('/chats/cancelTask', {
-                chatId: chatId, // Pass chatId instead of taskId
-                reason: cancellationReason || null, // User-provided reason
-            }, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                },
-            });
-    
-            if (response.status === 200) {
-                Alert.alert('Task Canceled', 'The task has been canceled and reverted to offered status.');
-                // Update local state to reflect the cancellation
-                setChatDetails(prevDetails => ({
-                    ...prevDetails,
-                    status: 'offered',
-                    taskerAcceptedId: null,
-                }));
-                // Refresh offers to make them available again
-                // await fetchOffers();
-                // Fetch updated user data to reflect canceledTasks
-                await fetchUserProfile(); // Ensure this function is available from UserContext
-                // Reset reason and close modal
-                setCancellationReason('');
-                setIsReasonModalVisible(false);
-            }
-        } catch (error) {
-            if (error.response) {
-                console.error('Error canceling task:', error.response.data);
-                Alert.alert('Error', error.response.data.error || 'Failed to cancel the task.');
-            } else {
-                console.error('Error canceling task:', error.message);
-                Alert.alert('Error', 'Failed to cancel the task.');
-            }
-        }
-    };
-
-    const submitReview = async () => {
-        if (rating > 0 && review.trim()) {
-            try {
-                const token = await AsyncStorage.getItem('userToken');
-                if (!token) throw new Error('User token not found');
-
-                await api.post(
-                    `/reviews`,
-                    { chatId, rating, review },
-                    {
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                        },
-                    }
-                );
-
-                Alert.alert('Review Submitted', 'Your review has been successfully submitted.');
-                setHasSubmittedReview(true); // Hide the review form after submission
-            } catch (error) {
-                console.error('Error submitting review:', error);
-                Alert.alert('Error', 'Failed to submit review.');
-            }
-        } else {
-            Alert.alert('Invalid Input', 'Please provide both a rating and a review.');
-        }
-    };
-
     const renderMessage = ({ item }) => {
         const isUserMessage = item.senderId === user?.id;
         return (
-            <View
-                style={[
-                    styles.messageContainer,
-                    isUserMessage ? styles.userMessage : styles.otherMessage,
-                ]}
-            >
-                <Text style={styles.senderName}>
-                    {isUserMessage ? 'You' : `${item.sender.firstName} ${item.sender.lastName}`}
-                </Text>
-                <Text style={styles.messageText}>{item.content}</Text>
+            <View style={[
+                styles.messageContainer,
+                isUserMessage ? styles.userMessage : styles.otherMessage,
+            ]}>
+                <View style={[
+                    styles.messageBubble,
+                    isUserMessage ? styles.userBubble : styles.otherBubble
+                ]}>
+                    <Text style={[
+                        styles.messageText,
+                        isUserMessage ? styles.userMessageText : styles.otherMessageText
+                    ]}>
+                        {item.content}
+                    </Text>
+                </View>
             </View>
         );
     };
 
-    const handleViewProfile = () => {
-        if (chatWithUserIdLocal) {
-            navigation.navigate('ProfileScreen', { userId: chatWithUserIdLocal });
-        } else {
-            Alert.alert('Error', 'Unable to locate user profile.');
-        }
-    };
-
     return (
-
-            <SafeAreaView style={styles.container}>
+        <KeyboardAvoidingView 
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.container}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+        >
+            <SafeAreaView style={styles.safeArea}>
                 <View style={styles.header}>
-                    {/* Back Button */}
                     <TouchableOpacity style={styles.backButton} onPress={handleBack}>
                         <Icon name="arrow-left" size={24} color="#fff" />
                     </TouchableOpacity>
-
-                    {/* Header Text */}
                     <View style={styles.headerTextContainer}>
                         <Text style={styles.headerTitle}>{chatWithName}</Text>
-                        <Text style={styles.headerSubTitle}>{chatDetails?.taskName || 'N/A'}</Text>
                     </View>
-
-                    {/* View Profile Button */}
-                    {/* <TouchableOpacity style={styles.viewProfileButton} onPress={handleViewProfile}>
-                        <Text style={styles.viewProfileButtonText}>View Profile</Text>
-                    </TouchableOpacity> */}
                 </View>
-
-                {/* {chatDetails && chatDetails.status === 'active' && (
-                    <>
-                        {isRequester ? (
-                            <View style={styles.taskActionContainer}>
-                                <Text style={styles.actionText}>The task is currently active.</Text>
-                                <TouchableOpacity style={styles.completeButton} onPress={handleCompleteTask}>
-                                    <Text style={styles.buttonText}>Mark Task as Completed</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity style={styles.cancelButton} onPress={handleCancelTask}>
-                                    <Text style={styles.buttonText}>Cancel Task</Text>
-                                </TouchableOpacity>
-                            </View>
-                        ) : (
-                            <View style={styles.taskActionContainer}>
-                                <Text style={styles.actionText}>The task is currently active.</Text>
-                                <Text style={styles.actionSubText}>{chatWithName} has not marked the task as completed yet.</Text>
-                                <TouchableOpacity style={styles.cancelButton} onPress={handleCancelTask}>
-                                    <Text style={styles.buttonText}>Cancel Task</Text>
-                                </TouchableOpacity>
-                            </View>
-                        )}
-                    </>
-                )} */}
-                {/* {chatDetails && chatDetails.status === 'pending' && (
-                <View style={styles.taskActionContainer}>
-                    <Text style={styles.actionText}>This offer has been cancelled.</Text>
-                </View>
-                )} */}
-
-                {/* {chatDetails && chatDetails.status === 'completed' && !hasSubmittedReview &&  (
-                    <View style={styles.reviewContainer}>
-                        <Text style={styles.reviewTitle}>Leave a Review</Text>
-                        <TextInput
-                            style={styles.reviewInput}
-                            placeholder="Write your review..."
-                            value={review}
-                            onChangeText={setReview}
-                            multiline
-                            placeholderTextColor="#aaa"
-                        />
-                        <View style={styles.ratingContainer}>
-                            <Text style={styles.ratingLabel}>Rate out of 5: </Text>
-                            {[1, 2, 3, 4, 5].map((star) => (
-                                <TouchableOpacity key={star} onPress={() => setRating(star)}>
-                                    <Text style={styles.star}>{star <= rating ? '★' : '☆'}</Text>
-                                </TouchableOpacity>
-                            ))}
-                        </View>
-                        <TouchableOpacity style={styles.submitButton} onPress={submitReview}>
-                            <Text style={styles.submitButtonText}>Submit Review</Text>
-                        </TouchableOpacity>
-                    </View>
-                )} */}
-
-            <KeyboardAvoidingView
-                style={styles.keyboardAvoidingView}
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0} // Adjust offset as needed
-            >
-                <View style={styles.content}>
-                    {/* Messages List */}
-                    <FlatList
-                        ref={flatListRef}
-                        data={messages}
-                        keyExtractor={(item) => item.id.toString()}
-                        renderItem={renderMessage}
-                        contentContainerStyle={styles.messagesList}
-                        keyboardDismissMode="on-drag"
-                        keyboardShouldPersistTaps="handled"
-                        onContentSizeChange={() => flatListRef.current.scrollToEnd({ animated: false })}
+    
+                <FlatList
+                    ref={flatListRef}
+                    data={messages}
+                    keyExtractor={(item) => item.id.toString()}
+                    renderItem={renderMessage}
+                    style={styles.flatList}
+                    contentContainerStyle={styles.messagesList}
+                    onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: false })}
+                    onLayout={() => flatListRef.current?.scrollToEnd({ animated: false })}
+                />
+    
+                <View style={styles.inputContainer}>
+                    <TextInput
+                        style={styles.textInput}
+                        placeholder="Type your message..."
+                        value={newMessage}
+                        onChangeText={setNewMessage}
+                        placeholderTextColor="#999"
+                        multiline
+                        maxHeight={100}
                     />
-
-                    {/* Message Input */}
-                    <View style={styles.inputContainer}>
-                        <TextInput
-                            style={styles.textInput}
-                            placeholder="Type your message..."
-                            value={newMessage}
-                            onChangeText={setNewMessage}
-                            placeholderTextColor="#aaa"
-                        />
-                        <TouchableOpacity style={styles.sendButton} onPress={handleSendMessage}>
-                            <Text style={styles.sendButtonText}>Send</Text>
-                        </TouchableOpacity>
-                    </View>
+                    <TouchableOpacity 
+                        style={[styles.sendButton, !newMessage.trim() && styles.sendButtonDisabled]}
+                        onPress={handleSendMessage}
+                        disabled={!newMessage.trim()}
+                    >
+                        <Icon name="send" size={20} color={newMessage.trim() ? "#fff" : "#ccc"} />
+                    </TouchableOpacity>
                 </View>
-
-            </KeyboardAvoidingView>
-                <Modal
-                    visible={isReasonModalVisible}
-                    transparent
-                    animationType="slide"
-                    onRequestClose={() => setIsReasonModalVisible(false)}
-                >
-                    <TouchableWithoutFeedback onPress={() => setIsReasonModalVisible(false)}>
-                        <View style={styles.modalOverlay}>
-                            <View style={styles.modalContent}>
-                                <Text style={styles.modalTitle}>Cancel Task</Text>
-                                <TextInput
-                                    style={styles.modalInput}
-                                    placeholder="Enter reason for cancellation (optional)"
-                                    value={cancellationReason}
-                                    onChangeText={setCancellationReason}
-                                    multiline
-                                    placeholderTextColor="#aaa"
-                                />
-                                <View style={styles.modalButtons}>
-                                    <TouchableOpacity style={styles.modalButton} onPress={() => setIsReasonModalVisible(false)}>
-                                        <Text style={styles.modalButtonText}>Cancel</Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity style={styles.modalButton} onPress={confirmCancelTask}>
-                                        <Text style={styles.modalButtonText}>Confirm</Text>
-                                    </TouchableOpacity>
-                                </View>
-                            </View>
-                        </View>
-                    </TouchableWithoutFeedback>
-                </Modal>
-
             </SafeAreaView>
+            <Modal
+                visible={isReasonModalVisible}
+                transparent
+                animationType="slide"
+                onRequestClose={() => setIsReasonModalVisible(false)}
+            />
+        </KeyboardAvoidingView>
     );
 };
 
 const styles = StyleSheet.create({
-    container: {
+    safeArea: {
         flex: 1,
         backgroundColor: '#fff',
-        marginBottom: 80,
+    },
+    container: {
+        flex: 1,
     },
     keyboardAvoidingView: {
         flex: 1,
@@ -450,29 +258,23 @@ const styles = StyleSheet.create({
     flatList: {
         flex: 1,
     },
-
     header: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
-        gap: 15,
         alignItems: 'center',
-        padding: 20,
-        //backgroundColor: '#ffffff', // Changed to white for a cleaner look
+        padding: 16,
         backgroundColor: '#3717ce',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 3, // For Android shadow
+        borderBottomWidth: 1,
+        borderBottomColor: 'rgba(0,0,0,0.1)',
     },
-    
-    
     headerTextContainer: {
         flex: 1,
-        paddingRight: 10, // Maintains space between text and button
+        marginLeft: 12,
     },
-    
-
+    headerTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#fff',
+    },
     viewProfileButton: {
         backgroundColor: '#ffffff',
         paddingVertical: 10,
@@ -486,89 +288,32 @@ const styles = StyleSheet.create({
         transform: [{ scale: 1 }],
         transition: 'transform 0.2s',
     },
-    
-    viewProfileButtonPressed: {
-        transform: [{ scale: 0.95 }],
+    chatContainer: {
+        flex: 1,
+        backgroundColor: '#f5f5f5',
+        justifyContent: 'space-between',
     },
-    
-    viewProfileButtonText: {
-        //color: '#ffffff',
-        color: '#3717ce',
-        fontSize: 14,
-        fontWeight: 'bold',
-    },
-    
-
-    headerTitle: {
-        fontSize: 20,
-        color: '#ffffff', // Darker shade for better contrast
-        fontWeight: 'bold',
-        marginBottom: 2,
-    },
-    
-    headerSubTitle: {
-        fontSize: 18,
-        color: '#ffffff', // Softer color for subtitle
-    },
-    
-    taskActionContainer: {
-        padding: 20,
-        backgroundColor: '#f9f9f9',
-        borderBottomWidth: 1,
-        borderColor: '#ddd',
+    messagesList: {
+        padding: 12,
+        flexGrow: 1,
     },
     actionButtons: {
         flexDirection: 'row',
-        marginTop: 10,
-    },
-    acceptButton: {
-        backgroundColor: '#4CAF50',
-        padding: 10,
-        marginRight: 10,
-        borderRadius: 5,
-    },
-    declineButton: {
-        backgroundColor: '#F44336',
-        padding: 10,
-        borderRadius: 5,
-    },
-    completeButton: {
-        backgroundColor: '#2196F3',
-        padding: 10,
-        borderRadius: 5,
         marginTop: 10,
     },
     buttonText: {
         color: '#fff',
         fontWeight: 'bold',
     },
-    cancelButton: {
-        backgroundColor: 'red', // Amber color to indicate caution
-        paddingVertical: 10,
-        paddingHorizontal: 15,
-        borderRadius: 5,
-        marginTop: 10,
-        alignItems: 'center',
-    },
-
-    messagesList: {
-        paddingHorizontal: 10,
-        paddingBottom: 10,
-
-    },
     messageContainer: {
-        marginBottom: 15,
-        maxWidth: '75%',
-        padding: 10,
-        borderRadius: 10,
+        marginVertical: 4,
+        maxWidth: '80%',
     },
     userMessage: {
         alignSelf: 'flex-end',
-        backgroundColor: '#2196F3',
     },
     otherMessage: {
         alignSelf: 'flex-start',
-        backgroundColor: '#e1e1e1',
     },
     senderName: {
         fontWeight: 'bold',
@@ -577,7 +322,27 @@ const styles = StyleSheet.create({
     },
     messageText: {
         fontSize: 16,
+        lineHeight: 20,
+    },
+    userMessageText: {
+        color: '#fff',
+    },
+    otherMessageText: {
         color: '#000',
+    },
+    messageBubble: {
+        borderRadius: 18,
+        paddingHorizontal: 14,
+        paddingVertical: 8,
+        maxWidth: '100%',
+    },
+    userBubble: {
+        backgroundColor: '#3717ce',
+    },
+    otherBubble: {
+        backgroundColor: '#fff',
+        borderWidth: 1,
+        borderColor: '#e0e0e0',
     },
     inputWrapper: {
         backgroundColor: '#fff',
@@ -588,118 +353,32 @@ const styles = StyleSheet.create({
     inputContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 10,
-        paddingVertical: 10,
-        // marginBottom: 25, // Removed marginBottom
-        borderTopWidth: 1,
-        borderColor: '#ccc',
+        padding: 8,
         backgroundColor: '#fff',
+        borderTopWidth: 1,
+        borderTopColor: '#e0e0e0',
     },
     textInput: {
         flex: 1,
-        paddingVertical: 8,
-        paddingHorizontal: 15,
+        backgroundColor: '#f5f5f5',
         borderRadius: 20,
-        backgroundColor: '#f2f2f2',
-        marginRight: 10,
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        marginRight: 8,
+        maxHeight: 100,
+        fontSize: 16,
     },
     sendButton: {
         backgroundColor: '#3717ce',
-        paddingVertical: 10,
-        paddingHorizontal: 20,
+        width: 40,
+        height: 40,
         borderRadius: 20,
-    },
-    sendButtonText: {
-        color: '#fff',
-        fontWeight: 'bold',
-    },
-    reviewContainer: {
-        padding: 20,
-        backgroundColor: '#f9f9f9',
-        borderTopWidth: 1,
-        borderColor: '#ddd',
-        marginTop: 20,
-    },
-    reviewTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        marginBottom: 10,
-    },
-    reviewInput: {
-        borderWidth: 1,
-        borderColor: '#ddd',
-        borderRadius: 10,
-        padding: 10,
-        marginBottom: 10,
-        height: 100,
-    },
-    ratingContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 20,
-    },
-    star: {
-        fontSize: 24,
-        marginHorizontal: 5,
-        color: '#FFD700',
-    },
-    submitButton: {
-        backgroundColor: '#4CAF50',
-        padding: 10,
-        borderRadius: 5,
+        justifyContent: 'center',
         alignItems: 'center',
     },
-    submitButtonText: {
-        color: '#fff',
-        fontWeight: 'bold',
+    sendButtonDisabled: {
+        backgroundColor: '#f5f5f5',
     },
-// Add these styles within the existing StyleSheet.create block
-
-modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-},
-modalContent: {
-    width: '85%',
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 20,
-},
-modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    color: '#333',
-},
-modalInput: {
-    height: 100,
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 5,
-    padding: 10,
-    textAlignVertical: 'top',
-    marginBottom: 20,
-    color: '#333',
-},
-modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-},
-modalButton: {
-    backgroundColor: '#3717ce',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 5,
-    alignItems: 'center',
-    flex: 0.48,
-},
-modalButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-},
 
 });
 
