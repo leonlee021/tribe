@@ -12,9 +12,11 @@ import { NotificationContext } from '../../contexts/NotificationContext';
 import { clearTaskNotifications } from '../../services/notificationService';
 import authService from '../../services/authService';
 import ProfileTaskPost from '../components/ProfileTaskPost';
+import { Platform } from 'react-native';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
-const ActivityScreen = () => {
-    const navigation = useNavigation();
+const ActivityScreen = ({ navigation, route }) => {
+   // const navigation = useNavigation();
     const [tasks, setTasks] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isReasonModalVisible, setIsReasonModalVisible] = useState(false);
@@ -375,6 +377,12 @@ const ActivityScreen = () => {
 
     return (
         <SafeAreaView style={styles.container}>
+            <TouchableOpacity 
+                onPress={() => navigation.goBack()}
+                style={styles.backButton}
+            >
+                <Ionicons name="arrow-back" size={24} color="#3717ce" />
+            </TouchableOpacity>
             {isLoading ? (
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color="#1DA1F2" />
@@ -433,6 +441,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#f8f9fa',
+        marginTop: Platform.OS === 'android' ? 20 : 0,
     },
     tabContainer: {
         flexDirection: 'row',
@@ -475,12 +484,17 @@ const styles = StyleSheet.create({
         flexGrow: 1, 
         paddingHorizontal: 20,
         paddingVertical: 10,
-      },
+        marginTop: Platform.OS === 'ios' ? 100 : 70, // Add top margin to push content down
+    },
     emptyText: {
         color: '#777',
         textAlign: 'center',
-        marginTop: 50,
         fontSize: 16,
+        marginTop: Platform.OS === 'ios' ? 100 : 70, // Adjust empty text position
+    },
+    list: {
+        flex: 1,
+        paddingTop: 10, // Add some padding at the top of the list
     },
     modalOverlay: {
         flex: 1,
@@ -527,7 +541,16 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: 'bold',
     },
-    list: {
-        flex: 1, // Ensure FlatList takes full available space
-      }, 
+      backButton: {
+        position: 'absolute',
+        top: Platform.OS === 'ios' ? 60 : 30,  // Proper spacing for both platforms
+        left: 20,
+        zIndex: 1,
+        padding: 8,
+    },
+    backButtonText: {
+        fontSize: 28,
+        color: '#3717ce',
+        fontWeight: '300',
+    },
 });

@@ -12,12 +12,12 @@ const data = [
         screen: "HomeScreen",
         icon: "home-outline",
     },
-    {
-        id: "2",
-        title: "Activity",
-        screen: "ActivityScreen",
-        icon: "pulse-outline",
-    },
+    // {
+    //     id: "2",
+    //     title: "Activity",
+    //     screen: "ActivityScreen",
+    //     icon: "pulse-outline",
+    // },
     // {
     //     id: "5",
     //     title: "Map",

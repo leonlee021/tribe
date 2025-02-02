@@ -24,7 +24,7 @@ import authService from '../../services/authService';
 const { width } = Dimensions.get('window');
 const MAX_WIDTH = Math.min(width * 0.9, 400);
 
-const HomeScreen = () => {
+const HomeScreen = ({ navigation }) => {
     const [description, setDescription] = useState('');
     // const [analyzedData, setAnalyzedData] = useState(null);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -50,50 +50,50 @@ const HomeScreen = () => {
     }, []);
 
     const handlePost = async () => {
-
         if (!description.trim()) {
             Alert.alert('Error', 'Please describe your task');
             return;
         }
-
+    
         setIsLoading(true);
-
+    
         try {
-            console.log('Attempting to create task...');
             const token = await AsyncStorage.getItem('userToken');
             if (!token) {
                 Alert.alert('Error', 'You must be logged in to post a task');
                 return;
             }
-
-            console.log('With data:', { description: description.trim() });
-            console.log('With token:', token)
-
+    
             const response = await authService.fetchWithSilentAuth(api => 
                 api.post('/tasks', {
-                    description: description.trim()
+                    postContent: description.trim()
+                }, {
+                    validateStatus: status => status < 500
                 })
             );
-
-            console.log('Task creation response:', response.data);
-
-            if (response?.data) {
+    
+            if (response.status === 201 && response.data) {
                 Alert.alert(
                     'Success', 
                     'Task has been posted!',
-                    [{ text: 'OK', onPress: () => setDescription('') }]
+                    [{ text: 'OK', onPress: () => {
+                        setDescription('');
+                        // Optionally trigger a refresh of tasks list
+                        // if (onTaskCreated) onTaskCreated(response.data);
+                    }}]
                 );
             } else {
-                console.log('Response without data:', response);
-                Alert.alert('Error', 'Failed to post task - no data returned');
+                const errorMessage = response.data?.error || 'Failed to post task';
+                Alert.alert('Error', errorMessage);
+                console.error('Task creation failed:', response);
             }
         } catch (error) {
             console.error('Error posting task:', error);
-            Alert.alert('Error', 'Failed to post the task');
+            const errorMessage = error.response?.data?.error || 'Network error while posting task';
+            Alert.alert('Error', errorMessage);
         } finally {
             setIsLoading(false);
         }
-
     };
 
     return (
@@ -146,6 +146,13 @@ const HomeScreen = () => {
                                         <Icon name="analytics" size={20} color="#fff" style={styles.buttonIcon} />
                                     </>
                                 )}
+                            </TouchableOpacity>
+                            <TouchableOpacity 
+                                style={styles.viewTasksButton}
+                                onPress={() => navigation.navigate('ActivityScreen')}
+                            >
+                                <Text style={styles.viewTasksButtonText}>View Requested Tasks</Text>
+                                <Icon name="list" size={20} color="#3717ce" style={styles.buttonIcon} />
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -315,6 +322,22 @@ const styles = StyleSheet.create({
     },
     submitButtonIcon: {
         marginLeft: 8,
+    },
+    viewTasksButton: {
+        backgroundColor: '#fff',
+        padding: 18,
+        borderRadius: 16,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginTop: 12,
+        borderWidth: 2,
+        borderColor: '#3717ce',
+    },
+    viewTasksButtonText: {
+        color: '#3717ce',
+        fontSize: 18,
+        fontWeight: '600',
     },
 });
 
