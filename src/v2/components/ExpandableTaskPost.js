@@ -309,7 +309,7 @@ const ExpandableTaskPost = ({
       animationType="slide"
       onRequestClose={() => setIsExpanded(false)}
     >
-      <View style={styles.modalContainer}>
+      <View style={[styles.modalContainer, isInChat && styles.modalContainerFullScreen]}>
       {!isInChat ? (
         <ScrollView style={styles.modalContent}>
           <View style={styles.modalHeader}>
@@ -508,7 +508,7 @@ const ExpandableTaskPost = ({
             )}
         </ScrollView>
       ) : 
-        <View style={styles.modalContent}>
+        <View style={styles.chatContainer}>
         <ChatDetailScreen 
           chatId={task.chatId} 
           onBack={() => setIsInChat(false)}
@@ -920,6 +920,18 @@ star: {
 },
 chatMode: {
   backgroundColor: '#fff', // Remove the modal background when in chat
+},
+modalContainerFullScreen: {
+  backgroundColor: '#ffffff', // Change to white when in chat
+},
+chatContainer: {
+  flex: 1,
+  backgroundColor: '#ffffff',
+  position: 'absolute',
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
 }
 });
 
