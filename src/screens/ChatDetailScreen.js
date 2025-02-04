@@ -9,27 +9,20 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../services/api';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { UserContext } from '../contexts/UserContext';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const ChatDetailScreen = ({ chatId, onBack }) => {
     const route = useRoute();
     const navigation = useNavigation();
     const { fromTaskPost, chatWithId } = route.params || {};
     const { user } = useContext(UserContext); // Consume UserContext to get the authenticated user
-
     const [chatWithName, setChatWithName] = useState('');
     const [chatWithUserIdLocal, setChatWithUserIdLocal] = useState(chatWithId || null);
-
     const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState('');
     const [chatDetails, setChatDetails] = useState(null);
     const [isRequester, setIsRequester] = useState(false);
-    const [showReviewForm, setShowReviewForm] = useState(false); // To show review form when task is marked complete
-    const [review, setReview] = useState('');  // For the review text input
-    const [rating, setRating] = useState(0);   // For the rating out of 5 stars
-    const [hasSubmittedReview, setHasSubmittedReview] = useState(false);
     const [isReasonModalVisible, setIsReasonModalVisible] = useState(false);
-    const [cancellationReason, setCancellationReason] = useState('');
-    const [offers, setOffers] = useState([]); // To manage offers
     const flatListRef = useRef(null);
     const activeChatId = chatId || route.params?.chatId;
 
@@ -75,8 +68,6 @@ const ChatDetailScreen = ({ chatId, onBack }) => {
                 } else {
                     setChatWithName(response.data.requesterName || 'Requester');
                 }
-
-                setHasSubmittedReview(response.data.hasSubmittedReview);
             } catch (error) {
                 console.error('Error fetching chat details:', error);
                 Alert.alert('Error', 'Failed to fetch chat details.');
@@ -191,7 +182,7 @@ const ChatDetailScreen = ({ chatId, onBack }) => {
             <SafeAreaView style={styles.safeArea}>
                 <View style={styles.header}>
                     <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-                        <Icon name="arrow-left" size={24} color="#fff" />
+                    <Ionicons name="arrow-back" size={24} color="white" />
                     </TouchableOpacity>
                     <View style={styles.headerTextContainer}>
                         <Text style={styles.headerTitle}>{chatWithName}</Text>

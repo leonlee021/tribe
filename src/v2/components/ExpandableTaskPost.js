@@ -235,7 +235,7 @@ const ExpandableTaskPost = ({
                     style={styles.applyButton}
                     onPress={() => setIsOfferModalVisible(true)}
                 >
-                    <Text style={styles.applyButtonText}>Apply Task</Text>
+                    <Text style={styles.applyButtonText}>Apply To Task</Text>
                 </TouchableOpacity>
             ) : (
                 <Text style={styles.appliedText}>You've already applied</Text>

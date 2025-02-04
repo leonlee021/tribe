@@ -12,12 +12,12 @@ const data = [
         screen: "HomeScreen",
         icon: "home-outline",
     },
-    // {
-    //     id: "2",
-    //     title: "Activity",
-    //     screen: "ActivityScreen",
-    //     icon: "pulse-outline",
-    // },
+    {
+        id: "2",
+        title: "Activity",
+        screen: "ActivityScreen",
+        icon: "pulse-outline",
+    },
     // {
     //     id: "5",
     //     title: "Map",
@@ -51,12 +51,12 @@ const TabBar = ({ currentScreen }) => {
                 horizontal
                 renderItem={({ item }) => {
                     // Dynamically set the notification count for each screen
-                    let notificationCount = 0;
-                    if (item.screen === 'ActivityScreen') {
-                        notificationCount = badgeCounts.activity;
-                      } else if (item.screen === 'ChatScreen') {
-                        notificationCount = badgeCounts.chat;
-                    }
+                    // let notificationCount = 0;
+                    // if (item.screen === 'ActivityScreen') {
+                    //     notificationCount = badgeCounts.activity;
+                    //   } else if (item.screen === 'ChatScreen') {
+                    //     notificationCount = badgeCounts.chat;
+                    // }
 
                     return (
                         <TouchableOpacity 
@@ -68,9 +68,9 @@ const TabBar = ({ currentScreen }) => {
                         >
                             <View style={styles.iconContainer}>
                                 <Icon name={item.icon} size={24} color={'black'} />
-                                {notificationCount > 0 && (
+                                {/* {notificationCount > 0 && (
                                     <Badge count={notificationCount} />
-                                )}
+                                )} */}
                             </View>
                         </TouchableOpacity>
                     );
