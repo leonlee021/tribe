@@ -4,8 +4,6 @@ Mutually is a cross-platform app for peer-to-peer task requests. It has real-tim
 
 I built it solo, after hours, while working as a full-time intern at AMD. Learned mobile dev from scratch, shipped a working beta, and got it live on TestFlight.
 
-🎥 [Video Demo](https://drive.google.com/file/d/1_jnoMLuQg7_4skvw8k0WvMbaMK6CKm3e/view?usp=sharing)
-
 🖥️ [Backend Repo](https://github.com/leonlee021/tribe-backend)
 
 ⚠️ **Note:**  
